@@ -80,14 +80,8 @@
       "destination": "/auto-direct-api/index.js"
     },
     {
-      "source": "/(.*)",
-      "destination": "/auto-direct-app/:1",
-      "missing": [
-        {
-          "type": 404,
-          "destination": "/auto-direct-app/index.html"
-        }
-      ]
+      "source": "/:path*",
+      "destination": "/auto-direct-app/:path*"
     }
   ],
   "env": {
