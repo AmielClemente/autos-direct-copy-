@@ -19,6 +19,66 @@
       "dest": "/auto-direct-api/index.js"
     },
     {
+      "src": "/user/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/vehicle/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/manufacturer/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/manage-dealerships/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/test-drive/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/purchases/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/order-processing/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/finance/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/finance-requests/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/vehicle-comparison/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/complaints/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/chatbot/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/vehicle-images/(.*)",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/auto-direct-api/index.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/auto-direct-app/$1"
     }

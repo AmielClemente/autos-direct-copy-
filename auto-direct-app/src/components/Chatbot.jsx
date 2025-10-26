@@ -51,11 +51,11 @@ function Chatbot() {
   
   // Environment-based configuration
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://autos-direct-copy.vercel.app/api' 
+    ? 'https://autos-direct-copy.vercel.app' 
     : 'http://localhost:3000';
 
   const SOCKET_URL = process.env.NODE_ENV === 'production'
-    ? 'https://autos-direct-copy.vercel.app/api'
+    ? 'https://autos-direct-copy.vercel.app'
     : 'http://localhost:3000';
 
   const COMPLAINTS_URL = process.env.NODE_ENV === 'production'

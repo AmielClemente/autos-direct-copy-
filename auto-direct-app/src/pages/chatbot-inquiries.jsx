@@ -8,11 +8,11 @@ function ChatbotInquiries() {
   
   // Environment-based configuration
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://autos-direct-copy.vercel.app/api' 
+    ? 'https://autos-direct-copy.vercel.app' 
     : 'http://localhost:3000';
 
   const SOCKET_URL = process.env.NODE_ENV === 'production'
-    ? 'https://autos-direct-copy.vercel.app/api'
+    ? 'https://autos-direct-copy.vercel.app'
     : 'http://localhost:3000';
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(false);
