@@ -4,7 +4,7 @@ import { User, Mail, Phone, MessageSquare, Clock, Send } from 'lucide-react';
 function ContactForm() {
   // Environment-based configuration
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://autos-direct.com.au' 
+    ? 'https://autos-direct-copy.vercel.app/api' 
     : 'http://localhost:3000';
 
   const [formData, setFormData] = useState({

@@ -26,7 +26,20 @@ const mysql = require('mysql2')
 const { connectionConfig } = require('./config/connectionsConfig');
 const pool = mysql.createPool(connectionConfig);
 
-app.use(cors());
+// CORS configuration to allow requests from Vercel frontend
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://autos-direct-copy.vercel.app',
+    'https://autos-direct.com.au'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json()); // Needed to parse JSON bodies
 
 // Health check endpoint
