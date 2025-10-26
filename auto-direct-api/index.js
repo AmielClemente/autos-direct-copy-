@@ -216,7 +216,13 @@ try {
 */
 
   app.get('/api/db-connection-test', (req, res) => {
-    pool.query('SELECT * from users', (err, results) => {
+    // Use req.pool from middleware (Supabase in production)
+    const dbClient = req.pool || pool;
+    if (!dbClient) {
+      return res.status(500).send('No database connection available');
+    }
+    
+    dbClient.query('SELECT * from users', (err, results) => {
       if (err) {
         console.error(`Query failed: ${err}`);
         res.status(500).send('Server error');
