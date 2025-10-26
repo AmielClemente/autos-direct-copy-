@@ -19,6 +19,10 @@ try {
 
 const createUser = async (userNewID, user ) => {
 	try {
+		if (!pool) {
+			throw new Error('Database pool not initialized. Please set up Supabase environment variables.');
+		}
+
 		const {firstName, lastName, emailAddress, passwordHash, phoneNumber, streetNo, streetName, suburb, postcode } = user;
 
 		// Prep SQL query with added timestamp fro createdAt
@@ -30,12 +34,16 @@ const createUser = async (userNewID, user ) => {
 			pool.query(query, [
 				userNewID, firstName, lastName, emailAddress, passwordHash, phoneNumber || "00000000", createdTime, streetNo, streetName, suburb, postcode, "Active"],
 				(err, result) => {
-				if (err) reject(err);
+				if (err) {
+					console.error('createUser error:', err);
+					reject(err);
+				} else {
 					resolve(result);
 				}
-			);
+			});
 		})
 	} catch (err) {
+		console.error('createUser exception:', err);
 		throw 'error while creating user: ' + err;
 	}
 }
@@ -67,16 +75,25 @@ const getAllUsers = () => {
 
 const getUserByEmail = (emailAddress) => {
 	try {
+		if (!pool) {
+			console.error('getUserByEmail: Database pool not initialized');
+			return Promise.resolve([]);
+		}
+
 		const query = `SELECT * FROM users WHERE (users.emailAddress = ?)`;
 		return new Promise((resolve, reject) => {
 			pool.query(query, [emailAddress],
 				(err, result) => {
-				if (err) reject(err);
+				if (err) {
+					console.error('getUserByEmail query error:', err);
+					reject(err);
+				} else {
 					resolve(result);
 				}
-			);
+			});
 		})
 	} catch (err) {
+		console.error('getUserByEmail exception:', err);
 		throw 'getUserByEmail error: ' + err;
 	}
 };
