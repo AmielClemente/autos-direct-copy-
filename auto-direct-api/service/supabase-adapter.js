@@ -146,12 +146,17 @@ class SupabaseAdapter {
           .in('vehicleid', vehicleIds)
           .eq('imageorder', 1);
         
+        console.log('[Supabase Adapter] Found images:', images?.length || 0);
+        
         // Map images to vehicles
         const imageMap = {};
         if (images) {
           images.forEach(img => {
-            if (!imageMap[img.vehicleid]) {
-              imageMap[img.vehicleid] = img.path;
+            // Convert to match vehicle ID format
+            const vid = img.vehicleid;
+            if (!imageMap[vid]) {
+              // Add /vehicle-images/ prefix for the image URL
+              imageMap[vid] = '/vehicle-images/' + img.path;
             }
           });
         }
@@ -159,6 +164,7 @@ class SupabaseAdapter {
         // Add images to vehicles
         data.forEach(v => {
           v.mainImage = imageMap[v.vehicleID] || null;
+          console.log('[Supabase Adapter] Vehicle', v.vehicleID, 'has image:', v.mainImage);
         });
       }
     }
