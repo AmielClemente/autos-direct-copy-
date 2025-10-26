@@ -24,7 +24,7 @@ let io;
 const PORT = process.env.PORT || 3000;
 
 const mysql = require('mysql2')
-const { connectionConfig, supabaseConfig } = require('./config/connectionsConfig');
+const { connectionConfig, supabaseConfig } = require('./config/supabaseConfig');
 const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client for production
