@@ -98,18 +98,31 @@ class SupabaseAdapter {
     
     // For vehicles, we need to add make names manually
     if (mainTable === 'vehicles' && data && data.length > 0) {
+      // PostgreSQL returns lowercase, convert to camelCase
+      data.forEach(v => {
+        v.vehicleID = v.vehicleid;
+        v.makeID = v.makeid;
+        v.modelName = v.modelname;
+        v.bodyType = v.bodytype;
+        v.driveType = v.drivetype;
+        v.approvalStatus = v.approvalstatus;
+        v.deletedStatus = v.deletedstatus;
+      });
+      
       // Get make IDs
       const makeIds = [...new Set(data.map(v => v.makeID))];
       if (makeIds.length > 0) {
         const { data: makes } = await this.supabase
           .from('makes')
-          .select('makeID, makeName')
-          .in('makeID', makeIds);
+          .select('makeid, makename')
+          .in('makeid', makeIds);
         
         // Map makes to vehicles
         const makeMap = {};
         if (makes) {
-          makes.forEach(m => { makeMap[m.makeID] = m.makeName; });
+          makes.forEach(m => { 
+            makeMap[m.makeid] = m.makename;
+          });
         }
         
         // Add makeName to each vehicle
