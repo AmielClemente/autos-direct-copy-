@@ -1,26 +1,6 @@
-const mysql = require('mysql2');
-const { connectionConfig } = require('../config/connectionsConfig.js');
+const { getPool } = require('./db-singleton.js');
 
-let pool;
-// Only create MySQL pool in development
-if (process.env.NODE_ENV !== 'production') {
-  try {
-    pool = mysql.createPool(connectionConfig);
-    // Test connection
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error('user-services: Database connection failed:', err.message);
-      } else {
-        console.log('user-services: Database connected successfully');
-        connection.release();
-      }
-    });
-  } catch (error) {
-    console.error('user-services: Failed to initialize database pool:', error.message);
-  }
-} else {
-  console.log('user-services: Production mode - Supabase will be used via req.supabase');
-}
+const pool = getPool();
 
 const createUser = async (userNewID, user, dbClient = null) => {
 	try {

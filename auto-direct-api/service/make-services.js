@@ -1,23 +1,6 @@
-const mysql = require('mysql2');
-const { connectionConfig } = require('../config/connectionsConfig.js');
+const { getPool } = require('./db-singleton.js');
 
-let pool;
-// Only create MySQL pool in development
-if (process.env.NODE_ENV !== 'production') {
-  pool = mysql.createPool(connectionConfig);
-  
-  // Add error handling for database connection
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Database connection failed in make-services:', err.message);
-    } else {
-      console.log('Database connected successfully in make-services');
-      connection.release();
-    }
-  });
-} else {
-  console.log('make-services: Production mode - Supabase will be used via req.supabase');
-}
+const pool = getPool();
 
 const getMakeID = async (makeName) => {
 	try {
