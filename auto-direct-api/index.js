@@ -105,11 +105,12 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-app.use('/user', userRoutes);
-app.use('/vehicle', vehicleRoutes);
-app.use('/manufacturer', manufacturerRoutes);
+// Temporarily comment out all routes to isolate the issue
+// app.use('/user', userRoutes);
+// app.use('/vehicle', vehicleRoutes);
+// app.use('/manufacturer', manufacturerRoutes);
 app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
-app.use('/api/chatbot', chatbotRoutes);
+// app.use('/api/chatbot', chatbotRoutes);
 // Temporarily comment out other routes to prevent crashes
 // app.use('/admin', adminRoutes);
 // app.use("/manage-dealerships", dealerRoutes);
@@ -121,7 +122,7 @@ app.use('/api/chatbot', chatbotRoutes);
 // app.use("/vehicle-comparison", vehicleComparisonRoutes);
 // app.use("/api/complaints", complaintsRoutes);
 
-connectDB();
+// connectDB();
 
 // Setup Socket.IO for real-time chatbot replies
 try {
