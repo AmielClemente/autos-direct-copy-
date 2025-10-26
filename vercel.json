@@ -80,10 +80,6 @@
       "destination": "/auto-direct-api/index.js"
     },
     {
-      "source": "/:file((?!.*\\.).*|.*\\.(html|htm))",
-      "destination": "/auto-direct-app/index.html"
-    },
-    {
       "source": "/:path*",
       "destination": "/auto-direct-app/:path*"
     }
