@@ -46,7 +46,7 @@ const insertVehicle =  async (req, res, next) => {
 
 
 
-    req.req.pool.query(vehicleQuery, [vehicleNewID, makeID, modelName, bodyType, fuelType, driveType, cylinders, doors, transmission, colour, price, description, approvalStatus], (err, result) => {
+    req.pool.query(vehicleQuery, [vehicleNewID, makeID, modelName, bodyType, fuelType, driveType, cylinders, doors, transmission, colour, price, description, approvalStatus], (err, result) => {
         if (err) {
           console.error('Unable to insert vehicle: ', err);
           return res.status(500).send('Server error');
