@@ -78,6 +78,11 @@
     {
       "source": "/health",
       "destination": "/auto-direct-api/index.js"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/auto-direct-app/:path*",
+      "continue": true
     }
   ],
   "env": {
