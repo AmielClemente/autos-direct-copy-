@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql2');
-const { connectionConfig } = require('../config/connectionsConfig');
 const nodemailer = require('nodemailer');
 const emailConfig = require('../email-config');
 

@@ -179,10 +179,8 @@ router.post('/test-drive', [ verifyToken, authorizeUser ], async (req, res) => {
 		try {
 			console.log('🚗 Test drive booking created successfully, sending confirmation email...');
 			
-			// Get user details
-			const mysql = require('mysql2');
-			const { connectionConfig } = require('../config/connectionsConfig.js');
-			const pool = mysql.createPool(connectionConfig);
+		// Use req.pool from middleware
+		const pool = req.pool;
 			
 			// Get user information
 			const userQuery = 'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?';
@@ -328,9 +326,8 @@ router.put('/test-drive-status', async (req, res) => {
 			return res.status(400).json({ error: 'BookingID and status are required' });
 		}
 
-		const mysql = require('mysql2');
-		const { connectionConfig } = require('../config/connectionsConfig.js');
-		const pool = mysql.createPool(connectionConfig);
+	// Use req.pool from middleware
+	const pool = req.pool;
 
 		const query = `UPDATE test_drive_bookings SET status = ? WHERE bookingID = ?`;
 		
@@ -364,9 +361,8 @@ router.put('/assign-dealer', async (req, res) => {
 			return res.status(400).json({ error: 'BookingID and dealerID are required' });
 		}
 
-		const mysql = require('mysql2');
-		const { connectionConfig } = require('../config/connectionsConfig.js');
-		const pool = mysql.createPool(connectionConfig);
+	// Use req.pool from middleware
+	const pool = req.pool;
 
 		const query = `UPDATE test_drive_bookings SET dealerID = ? WHERE bookingID = ?`;
 		
