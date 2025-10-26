@@ -2,25 +2,24 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
-// Temporarily comment out route imports to isolate the issue
-// const userRoutes = require('./routes/user-routes');
-// const vehicleRoutes = require('./routes/vehicle-routes');
-// const manufacturerRoutes = require('./routes/manufacturer-routes');
-// const adminRoutes = require('./routes/admin-routes');
-// const dealerRoutes = require('./routes/dealer-routes');
-// const testDriveBookingRoutes = require('./routes/test-drive-booking-routes');
-// const purchasesRoute = require('./routes/purchase-routes');
-// const orderProcessingRoutes = require('./routes/order-processing-routes');
-// const financeRoutes = require('./routes/finance-routes');
-// const financeRequestsRoutes = require('./routes/finance-requests-routes');
-// const vehicleComparisonRoutes = require('./routes/vehicle-comparison-routes');
-// const complaintsRoutes = require('./routes/complaints-routes');
-// const chatbotRoutes = require('./routes/chatbot-routes');
+const userRoutes = require('./routes/user-routes');
+const vehicleRoutes = require('./routes/vehicle-routes');
+const manufacturerRoutes = require('./routes/manufacturer-routes');
+const adminRoutes = require('./routes/admin-routes');
+const dealerRoutes = require('./routes/dealer-routes');
+const testDriveBookingRoutes = require('./routes/test-drive-booking-routes');
+const purchasesRoute = require('./routes/purchase-routes');
+const orderProcessingRoutes = require('./routes/order-processing-routes');
+const financeRoutes = require('./routes/finance-routes');
+const financeRequestsRoutes = require('./routes/finance-requests-routes');
+const vehicleComparisonRoutes = require('./routes/vehicle-comparison-routes');
+const complaintsRoutes = require('./routes/complaints-routes');
+const chatbotRoutes = require('./routes/chatbot-routes');
 
 const app = express();
 const server = http.createServer(app);
 let io;
-// const connectDB = require("./service/databaseConnection");
+const connectDB = require("./service/databaseConnection");
 const PORT = process.env.PORT || 3000;
 
 const mysql = require('mysql2')
@@ -106,24 +105,22 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Temporarily comment out all routes to isolate the issue
-// app.use('/user', userRoutes);
-// app.use('/vehicle', vehicleRoutes);
-// app.use('/manufacturer', manufacturerRoutes);
+app.use('/user', userRoutes);
+app.use('/vehicle', vehicleRoutes);
+app.use('/manufacturer', manufacturerRoutes);
 app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
-// app.use('/api/chatbot', chatbotRoutes);
-// Temporarily comment out other routes to prevent crashes
-// app.use('/admin', adminRoutes);
-// app.use("/manage-dealerships", dealerRoutes);
-// app.use("/test-drive", testDriveBookingRoutes);
-// app.use("/purchases", purchasesRoute);
-// app.use("/order-processing", orderProcessingRoutes);
-// app.use("/finance", financeRoutes);
-// app.use("/finance-requests", financeRequestsRoutes);
-// app.use("/vehicle-comparison", vehicleComparisonRoutes);
-// app.use("/api/complaints", complaintsRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+app.use('/admin', adminRoutes);
+app.use("/manage-dealerships", dealerRoutes);
+app.use("/test-drive", testDriveBookingRoutes);
+app.use("/purchases", purchasesRoute);
+app.use("/order-processing", orderProcessingRoutes);
+app.use("/finance", financeRoutes);
+app.use("/finance-requests", financeRequestsRoutes);
+app.use("/vehicle-comparison", vehicleComparisonRoutes);
+app.use("/api/complaints", complaintsRoutes);
 
-// connectDB();
+connectDB();
 
 // Setup Socket.IO for real-time chatbot replies
 try {
