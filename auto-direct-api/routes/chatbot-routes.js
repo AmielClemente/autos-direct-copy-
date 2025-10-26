@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql2');
-const { connectionConfig } = require('../config/connectionsConfig.js');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+const { supabaseConfig } = require('../config/supabaseConfig.js');
 
-const pool = mysql.createPool(connectionConfig);
+// Initialize Supabase client
+const supabase = supabaseConfig.url && supabaseConfig.serviceRoleKey 
+  ? createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey)
+  : null;
 
 // Helper function to generate session ID
 const generateSessionId = () => {
@@ -89,58 +92,59 @@ router.post('/register', async (req, res) => {
     const sessionId = generateSessionId();
     const customerKey = generateCustomerKey(customerEmail, customerPhone, sessionId);
 
+    // Use Supabase
+    if (!supabase) {
+      return res.status(500).json({ error: 'Database not configured' });
+    }
+
     // Check if customer already exists
-    const existingCustomerQuery = `
-      SELECT id, session_id FROM customer_inquiries 
-      WHERE customer_key = ? 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
-    
-    pool.query(existingCustomerQuery, [customerKey], (err, results) => {
-      if (err) {
-        console.error('Error checking existing customer:', err);
-        return res.status(500).json({ error: 'Database error' });
+    const { data: existingCustomers, error: selectError } = await supabase
+      .from('customer_inquiries')
+      .select('id, session_id')
+      .eq('customer_key', customerKey)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (selectError) {
+      console.error('Error checking existing customer:', selectError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (existingCustomers && existingCustomers.length > 0) {
+      // Customer exists, return existing session
+      res.json({
+        success: true,
+        sessionId: existingCustomers[0].session_id,
+        customerKey: customerKey,
+        message: 'Welcome back!'
+      });
+    } else {
+      // New customer, create initial inquiry record
+      const { data: newInquiry, error: insertError } = await supabase
+        .from('customer_inquiries')
+        .insert({
+          customer_message: `Customer ${customerName || 'Anonymous'} started a new conversation`,
+          customer_email: customerEmail || null,
+          customer_phone: customerPhone || null,
+          session_id: sessionId,
+          customer_key: customerKey,
+          status: 'pending'
+        })
+        .select();
+
+      if (insertError) {
+        console.error('Error creating customer inquiry:', insertError);
+        return res.status(500).json({ error: 'Failed to create customer record' });
       }
 
-      if (results.length > 0) {
-        // Customer exists, return existing session
-        res.json({
-          success: true,
-          sessionId: results[0].session_id,
-          customerKey: customerKey,
-          message: 'Welcome back!'
-        });
-      } else {
-        // New customer, create initial inquiry record
-        const createInquiryQuery = `
-          INSERT INTO customer_inquiries 
-          (customer_message, customer_email, customer_phone, session_id, customer_key, status, created_at)
-          VALUES (?, ?, ?, ?, ?, 'pending', NOW())
-        `;
-        
-        pool.query(createInquiryQuery, [
-          `Customer ${customerName || 'Anonymous'} started a new conversation`,
-          customerEmail || null,
-          customerPhone || null,
-          sessionId,
-          customerKey
-        ], (err, result) => {
-          if (err) {
-            console.error('Error creating customer inquiry:', err);
-            return res.status(500).json({ error: 'Failed to create customer record' });
-          }
-
-          res.json({
-            success: true,
-            sessionId: sessionId,
-            customerKey: customerKey,
-            inquiryId: result.insertId,
-            message: 'Registration successful! You can now start chatting.'
-          });
-        });
-      }
-    });
+      res.json({
+        success: true,
+        sessionId: sessionId,
+        customerKey: customerKey,
+        inquiryId: newInquiry[0].id,
+        message: 'Registration successful! You can now start chatting.'
+      });
+    }
 
   } catch (error) {
     console.error('Error in register endpoint:', error);
@@ -157,138 +161,122 @@ router.post('/message', async (req, res) => {
       return res.status(400).json({ error: 'Session ID and message are required' });
     }
 
-    // Find or create inquiry for this session
-    const findInquiryQuery = `
-      SELECT id FROM customer_inquiries 
-      WHERE session_id = ? AND customer_key = ?
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
-    
-    pool.query(findInquiryQuery, [sessionId, customerKey], (err, results) => {
-      if (err) {
-        console.error('Error finding inquiry:', err);
-        return res.status(500).json({ error: 'Database error' });
-      }
+    if (!supabase) {
+      return res.status(500).json({ error: 'Database not configured' });
+    }
 
-      if (results.length === 0) {
-        return res.status(404).json({ error: 'Session not found. Please register first.' });
-      }
+    // Find inquiry for this session
+    const { data: inquiries, error: findError } = await supabase
+      .from('customer_inquiries')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('customer_key', customerKey)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-      const inquiryId = results[0].id;
+    if (findError) {
+      console.error('Error finding inquiry:', findError);
+      return res.status(500).json({ error: 'Database error' });
+    }
 
-      // Update customer information if provided (for user messages)
-      if (sender === 'user' && (customerEmail || customerName || customerPhone)) {
-        const updateCustomerQuery = `
-          UPDATE customer_inquiries 
-          SET customer_email = COALESCE(?, customer_email),
-              customer_phone = COALESCE(?, customer_phone),
-              updated_at = NOW()
-          WHERE id = ?
-        `;
-        
-        pool.query(updateCustomerQuery, [customerEmail, customerPhone, inquiryId], (err) => {
-          if (err) {
-            console.error('Error updating customer info:', err);
-          }
+    if (!inquiries || inquiries.length === 0) {
+      return res.status(404).json({ error: 'Session not found. Please register first.' });
+    }
+
+    const inquiryId = inquiries[0].id;
+
+    // Update customer information if provided (for user messages)
+    if (sender === 'user' && (customerEmail || customerPhone)) {
+      const updateData = {};
+      if (customerEmail) updateData.customer_email = customerEmail;
+      if (customerPhone) updateData.customer_phone = customerPhone;
+      
+      await supabase
+        .from('customer_inquiries')
+        .update(updateData)
+        .eq('id', inquiryId);
+    }
+
+    // Insert message into chatbot_messages table
+    const { data: newMessage, error: insertError } = await supabase
+      .from('chatbot_messages')
+      .insert({
+        inquiry_id: inquiryId,
+        sender: sender,
+        message: message
+      })
+      .select();
+
+    if (insertError) {
+      console.error('Error inserting message:', insertError);
+      return res.status(500).json({ error: 'Failed to save message' });
+    }
+
+    const messageId = newMessage[0].id;
+
+    // Generate AI response if it's a user message
+    if (sender === 'user') {
+      const aiResponse = generateAIResponse(message);
+      const needsHumanAgent = aiResponse.includes('connect you with our customer service team');
+      
+      // Insert AI response as a message
+      await supabase
+        .from('chatbot_messages')
+        .insert({
+          inquiry_id: inquiryId,
+          sender: 'ai',
+          message: aiResponse
+        });
+      
+      // Update inquiry status
+      const newStatus = needsHumanAgent ? 'pending' : 'ai_handled';
+      await supabase
+        .from('customer_inquiries')
+        .update({ status: newStatus })
+        .eq('id', inquiryId);
+      
+      // Emit real-time update
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('customer_message', {
+          inquiryId: inquiryId,
+          message: message,
+          timestamp: new Date().toISOString()
         });
       }
-
-      // Insert message into chatbot_messages table
-      const insertMessageQuery = `
-        INSERT INTO chatbot_messages (inquiry_id, sender, message, created_at)
-        VALUES (?, ?, ?, NOW())
-      `;
       
-      pool.query(insertMessageQuery, [inquiryId, sender, message], (err, result) => {
-        if (err) {
-          console.error('Error inserting message:', err);
-          return res.status(500).json({ error: 'Failed to save message' });
-        }
-
-        // Generate AI response if it's a user message
-        if (sender === 'user') {
-          const aiResponse = generateAIResponse(message);
-          const needsHumanAgent = aiResponse.includes('connect you with our customer service team');
-          
-          // Insert AI response as a message
-          const insertAIResponseQuery = `
-            INSERT INTO chatbot_messages (inquiry_id, sender, message, created_at)
-            VALUES (?, 'ai', ?, NOW())
-          `;
-          
-          pool.query(insertAIResponseQuery, [inquiryId, aiResponse], (err, aiResult) => {
-            if (err) {
-              console.error('Error inserting AI response:', err);
-            }
-            
-            // Update inquiry status based on whether AI can handle it
-            const updateInquiryQuery = `
-              UPDATE customer_inquiries 
-              SET status = ?, updated_at = NOW()
-              WHERE id = ?
-            `;
-            
-            const newStatus = needsHumanAgent ? 'pending' : 'ai_handled';
-            
-            pool.query(updateInquiryQuery, [newStatus, inquiryId], (err) => {
-              if (err) {
-                console.error('Error updating inquiry:', err);
-              }
-              
-              // Emit real-time update for customer messages
-              const io = req.app.get('io');
-              if (io) {
-                io.emit('customer_message', {
-                  inquiryId: inquiryId,
-                  message: message,
-                  timestamp: new Date().toISOString()
-                });
-              }
-              
-              res.json({
-                success: true,
-                messageId: result.insertId,
-                inquiryId: inquiryId,
-                aiResponse: aiResponse,
-                needsHumanAgent: needsHumanAgent
-              });
-            });
-          });
-        } else {
-          // Handle non-user messages (agent replies, etc.)
-          const updateInquiryQuery = `
-            UPDATE customer_inquiries 
-            SET status = ?, updated_at = NOW()
-            WHERE id = ?
-          `;
-          
-          const newStatus = sender === 'user' ? 'pending' : 'responded';
-          
-          pool.query(updateInquiryQuery, [newStatus, inquiryId], (err) => {
-            if (err) {
-              console.error('Error updating inquiry:', err);
-            }
-            
-            // Emit real-time update for customer messages
-            const io = req.app.get('io');
-            if (io && sender === 'user') {
-              io.emit('customer_message', {
-                inquiryId: inquiryId,
-                message: message,
-                timestamp: new Date().toISOString()
-              });
-            }
-            
-            res.json({
-              success: true,
-              messageId: result.insertId,
-              inquiryId: inquiryId
-            });
-          });
-        }
+      res.json({
+        success: true,
+        messageId: messageId,
+        inquiryId: inquiryId,
+        aiResponse: aiResponse,
+        needsHumanAgent: needsHumanAgent
       });
-    });
+    } else {
+      // Handle non-user messages
+      const newStatus = sender === 'user' ? 'pending' : 'responded';
+      
+      await supabase
+        .from('customer_inquiries')
+        .update({ status: newStatus })
+        .eq('id', inquiryId);
+      
+      // Emit real-time update for customer messages
+      const io = req.app.get('io');
+      if (io && sender === 'user') {
+        io.emit('customer_message', {
+          inquiryId: inquiryId,
+          message: message,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      res.json({
+        success: true,
+        messageId: messageId,
+        inquiryId: inquiryId
+      });
+    }
 
   } catch (error) {
     console.error('Error in message endpoint:', error);
