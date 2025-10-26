@@ -110,19 +110,28 @@ app.use((req, res, next) => {
   
   // In production with Supabase, use SupabaseAdapter to make Supabase work like MySQL pool
   if (supabase && process.env.NODE_ENV === 'production') {
+    console.log('[Middleware] Using Supabase adapter');
     const adapter = new SupabaseAdapter(supabase);
     req.pool = {
       query: (sql, params, callback) => {
+        console.log('[Middleware] Query called with SQL:', sql.substring(0, 100));
         const result = adapter.query(sql, params);
         if (callback) {
           result
-            .then(data => callback(null, data))
-            .catch(err => callback(err));
+            .then(data => {
+              console.log('[Middleware] Query returned', data?.length || 0, 'rows');
+              callback(null, data);
+            })
+            .catch(err => {
+              console.error('[Middleware] Query error:', err);
+              callback(err);
+            });
         }
         return result;
       }
     };
   } else {
+    console.log('[Middleware] Using MySQL pool');
     req.pool = pool;
   }
   
