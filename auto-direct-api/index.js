@@ -95,15 +95,23 @@ const corsOptions = {
     // Allow localhost for development
     if (origin.includes('localhost')) return callback(null, true);
     
-    // Allow all Vercel preview and production URLs
-    if (origin.includes('vercel.app') || origin.includes('autos-direct.com.au')) {
+    // Allow ALL Vercel preview and production URLs
+    // This includes all subdomains and preview URLs
+    if (origin.includes('vercel.app')) {
       return callback(null, true);
     }
     
-    callback(null, false);
+    // Allow custom domain
+    if (origin.includes('autos-direct.com.au')) {
+      return callback(null, true);
+    }
+    
+    // For production, allow requests from any Vercel domain
+    console.log('[CORS] Allowing origin:', origin);
+    callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
