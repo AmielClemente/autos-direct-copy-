@@ -18,8 +18,22 @@ const getMakeID = async (makeName) => {
 	}
 };
 
-const getAllMakes = async (dbClient = null) => {
+const getAllMakes = async (dbClient = null, supabaseClient = null) => {
 	try {
+		// If we have Supabase in production, use it
+		if (supabaseClient && process.env.NODE_ENV === 'production') {
+			const { data, error } = await supabaseClient
+				.from('makes')
+				.select('*');
+			
+			if (error) {
+				console.error('Error in getAllMakes from Supabase:', error);
+				return [];
+			}
+			return data || [];
+		}
+
+		// Otherwise use MySQL
 		if (!pool && !dbClient) {
 			console.error('getAllMakes: No database pool or client provided');
 			return [];

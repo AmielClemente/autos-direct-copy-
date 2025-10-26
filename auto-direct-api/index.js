@@ -101,7 +101,23 @@ app.use(express.json()); // Needed to parse JSON bodies
 // Make database clients available to routes
 app.use((req, res, next) => {
   req.supabase = supabase;
-  req.pool = pool;
+  
+  // In production with Supabase, create a wrapper that makes Supabase work like MySQL pool
+  if (supabase && process.env.NODE_ENV === 'production') {
+    req.pool = {
+      query: (sql, params, callback) => {
+        console.log('Supabase query adapter:', sql.substring(0, 100));
+        // For now, return empty results
+        if (callback) {
+          callback(null, []);
+        }
+        return Promise.resolve([]);
+      }
+    };
+  } else {
+    req.pool = pool;
+  }
+  
   next();
 });
 
