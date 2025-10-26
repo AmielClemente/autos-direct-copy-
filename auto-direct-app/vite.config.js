@@ -13,4 +13,8 @@ export default defineConfig({
 			'/api': 'http://localhost:3000', // route for API calls
 		},
 	},
+	publicDir: 'public',
+	build: {
+		copyPublicDir: true,
+	},
 })
