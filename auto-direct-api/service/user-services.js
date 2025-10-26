@@ -2,27 +2,33 @@ const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
 
 let pool;
-try {
-  pool = mysql.createPool(connectionConfig);
-  // Test connection
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('user-services: Database connection failed:', err.message);
-    } else {
-      console.log('user-services: Database connected successfully');
-      connection.release();
-    }
-  });
-} catch (error) {
-  console.error('user-services: Failed to initialize database pool:', error.message);
+// Only create MySQL pool in development
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    pool = mysql.createPool(connectionConfig);
+    // Test connection
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('user-services: Database connection failed:', err.message);
+      } else {
+        console.log('user-services: Database connected successfully');
+        connection.release();
+      }
+    });
+  } catch (error) {
+    console.error('user-services: Failed to initialize database pool:', error.message);
+  }
+} else {
+  console.log('user-services: Production mode - Supabase will be used via req.supabase');
 }
 
-const createUser = async (userNewID, user ) => {
+const createUser = async (userNewID, user, dbClient = null) => {
 	try {
-		if (!pool) {
+		if (!dbClient && !pool) {
 			throw new Error('Database pool not initialized. Please set up Supabase environment variables.');
 		}
 
+		const db = dbClient || pool;
 		const {firstName, lastName, emailAddress, passwordHash, phoneNumber, streetNo, streetName, suburb, postcode } = user;
 
 		// Prep SQL query with added timestamp fro createdAt
@@ -31,7 +37,7 @@ const createUser = async (userNewID, user ) => {
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 		return new Promise((resolve, reject) => {
-			pool.query(query, [
+			db.query(query, [
 				userNewID, firstName, lastName, emailAddress, passwordHash, phoneNumber || "00000000", createdTime, streetNo, streetName, suburb, postcode, "Active"],
 				(err, result) => {
 				if (err) {
@@ -73,16 +79,17 @@ const getAllUsers = () => {
 	}
 }
 
-const getUserByEmail = (emailAddress) => {
+const getUserByEmail = (emailAddress, dbClient = null) => {
 	try {
-		if (!pool) {
+		const db = dbClient || pool;
+		if (!db) {
 			console.error('getUserByEmail: Database pool not initialized');
 			return Promise.resolve([]);
 		}
 
 		const query = `SELECT * FROM users WHERE (users.emailAddress = ?)`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [emailAddress],
+			db.query(query, [emailAddress],
 				(err, result) => {
 				if (err) {
 					console.error('getUserByEmail query error:', err);

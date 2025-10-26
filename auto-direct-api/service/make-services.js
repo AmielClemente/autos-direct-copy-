@@ -1,16 +1,23 @@
 const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
-const pool = mysql.createPool(connectionConfig);
 
-// Add error handling for database connection
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('Database connection failed in make-services:', err.message);
-  } else {
-    console.log('Database connected successfully in make-services');
-    connection.release();
-  }
-});
+let pool;
+// Only create MySQL pool in development
+if (process.env.NODE_ENV !== 'production') {
+  pool = mysql.createPool(connectionConfig);
+  
+  // Add error handling for database connection
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Database connection failed in make-services:', err.message);
+    } else {
+      console.log('Database connected successfully in make-services');
+      connection.release();
+    }
+  });
+} else {
+  console.log('make-services: Production mode - Supabase will be used via req.supabase');
+}
 
 const getMakeID = async (makeName) => {
 	try {
@@ -28,11 +35,17 @@ const getMakeID = async (makeName) => {
 	}
 };
 
-const getAllMakes = async () => {
+const getAllMakes = async (dbClient = null) => {
 	try {
+		if (!pool && !dbClient) {
+			console.error('getAllMakes: No database pool or client provided');
+			return [];
+		}
+
+		const db = dbClient || pool;
 		const query = `SELECT * FROM makes`
 		return new Promise((resolve, reject) => {
-			pool.query(query,
+			db.query(query,
 			(err, result) => {
 				if (err) {
 					console.error('Error in getAllMakes:', err);
