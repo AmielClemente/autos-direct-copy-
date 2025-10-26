@@ -23,8 +23,38 @@ const connectDB = require("./service/databaseConnection");
 const PORT = process.env.PORT || 3000;
 
 const mysql = require('mysql2')
-const { connectionConfig } = require('./config/connectionsConfig');
-const pool = mysql.createPool(connectionConfig);
+const { connectionConfig, supabaseConfig } = require('./config/connectionsConfig');
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client for production
+let supabase;
+if (process.env.NODE_ENV === 'production' && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
+  supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
+  console.log('Supabase client initialized for production');
+} else {
+  console.log('Supabase not configured, using MySQL for development');
+}
+
+// Create a simple connection pool with error handling for MySQL (development)
+let pool;
+try {
+  // Try to create the connection pool
+  pool = mysql.createPool(connectionConfig);
+  
+  // Test the connection
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Database connection failed:', err.message);
+      console.log('Running without database connection...');
+    } else {
+      console.log('Database connected successfully');
+      connection.release();
+    }
+  });
+} catch (error) {
+  console.error('Failed to initialize database pool:', error.message);
+  console.log('Running without database connection...');
+}
 
 // CORS configuration to allow requests from Vercel frontend
 const corsOptions = {
@@ -49,13 +79,33 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json()); // Needed to parse JSON bodies
 
+// Make database clients available to routes
+app.use((req, res, next) => {
+  req.supabase = supabase;
+  req.pool = pool;
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString(), ports: { frontend: 5173, backend: 3000 } });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(), 
+    database: supabase ? 'Supabase Connected' : (pool ? 'MySQL Connected' : 'Not Available'),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Simple API endpoint for testing
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'API is working!', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.use('/user', userRoutes);
-app.use('/vehicle', vehicleRoutes);
 app.use('/manufacturer', manufacturerRoutes);
 app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
 app.use('/admin', adminRoutes);
