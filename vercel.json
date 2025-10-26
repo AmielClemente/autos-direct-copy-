@@ -81,7 +81,13 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/auto-direct-app/$1"
+      "dest": "/auto-direct-app/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/auto-direct-app/index.html"
     }
   ],
   "env": {
