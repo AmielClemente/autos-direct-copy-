@@ -8,9 +8,14 @@ let pool = null;
 let supabase = null;
 
 function getPool() {
-  // In production, Supabase is initialized in index.js and passed via req
+  // In production, don't create MySQL pool at all
+  if (process.env.NODE_ENV === 'production') {
+    console.log('db-singleton: Production mode - MySQL pool not available');
+    return null;
+  }
+  
   // In development, create MySQL pool
-  if (!pool && process.env.NODE_ENV !== 'production') {
+  if (!pool) {
     try {
       console.log('Creating MySQL pool in db-singleton');
       pool = mysql.createPool(connectionConfig);
