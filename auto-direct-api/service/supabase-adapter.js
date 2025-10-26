@@ -69,6 +69,7 @@ class SupabaseAdapter {
 
   async handleJoinQuery(sql, params) {
     console.log('[Supabase Adapter] Handling JOIN query');
+    console.log('[Supabase Adapter] SQL:', sql);
     
     // For simple queries, just get vehicles and we'll add related data
     const fromMatch = sql.match(/from\s+(\w+)/i);
