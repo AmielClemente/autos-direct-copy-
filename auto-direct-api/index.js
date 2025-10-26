@@ -106,18 +106,20 @@ app.get('/api/test', (req, res) => {
 });
 
 app.use('/user', userRoutes);
+app.use('/vehicle', vehicleRoutes);
 app.use('/manufacturer', manufacturerRoutes);
 app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
-app.use('/admin', adminRoutes);
-app.use("/manage-dealerships", dealerRoutes);
-app.use("/test-drive", testDriveBookingRoutes);
-app.use("/purchases", purchasesRoute);
-app.use("/order-processing", orderProcessingRoutes);
-app.use("/finance", financeRoutes);
-app.use("/finance-requests", financeRequestsRoutes);
-app.use("/vehicle-comparison", vehicleComparisonRoutes);
-app.use("/api/complaints", complaintsRoutes);
-app.use("/api/chatbot", chatbotRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+// Temporarily comment out other routes to prevent crashes
+// app.use('/admin', adminRoutes);
+// app.use("/manage-dealerships", dealerRoutes);
+// app.use("/test-drive", testDriveBookingRoutes);
+// app.use("/purchases", purchasesRoute);
+// app.use("/order-processing", orderProcessingRoutes);
+// app.use("/finance", financeRoutes);
+// app.use("/finance-requests", financeRequestsRoutes);
+// app.use("/vehicle-comparison", vehicleComparisonRoutes);
+// app.use("/api/complaints", complaintsRoutes);
 
 connectDB();
 
