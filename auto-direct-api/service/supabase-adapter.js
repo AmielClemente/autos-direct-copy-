@@ -29,16 +29,21 @@ class SupabaseAdapter {
   }
 
   async handleSelect(sql, params) {
+    console.log('[Supabase Adapter] SELECT Query:', sql.substring(0, 150));
+    console.log('[Supabase Adapter] Params:', params);
+    
     // Parse table name
     const fromMatch = sql.match(/from\s+(\w+)/i);
     if (!fromMatch) {
-      console.error('Could not extract table name from SQL');
+      console.error('[Supabase Adapter] Could not extract table name from SQL');
       return [];
     }
     const table = fromMatch[1];
+    console.log('[Supabase Adapter] Table:', table);
     
     // Handle JOIN queries specially
     if (sql.toLowerCase().includes('join')) {
+      console.log('[Supabase Adapter] Detected JOIN query');
       return await this.handleJoinQuery(sql, params);
     }
     
@@ -49,11 +54,16 @@ class SupabaseAdapter {
     const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
     if (whereMatch) {
       const whereClause = whereMatch[1].trim();
+      console.log('[Supabase Adapter] WHERE clause:', whereClause);
       query = this.applyWhereClause(query, whereClause, params);
     }
     
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      console.error('[Supabase Adapter] Error:', error);
+      throw error;
+    }
+    console.log('[Supabase Adapter] Results:', data?.length || 0, 'rows');
     return data || [];
   }
 
@@ -166,6 +176,7 @@ class SupabaseAdapter {
   }
 
   applyWhereClause(query, whereClause, params) {
+    console.log('[Supabase Adapter] Parsing WHERE:', whereClause);
     // Remove parentheses
     whereClause = whereClause.replace(/[()]/g, '');
     
@@ -175,10 +186,12 @@ class SupabaseAdapter {
     
     for (let i = 0; i < parts.length; i += 2) {
       const condition = parts[i].trim();
+      console.log('[Supabase Adapter] Processing condition:', condition, 'paramIndex:', paramIndex);
       
       // Handle "table.column = ?" pattern (e.g., "users.emailAddress = ?")
       const tableColMatch = condition.match(/(\w+)\.(\w+)\s*=\s*\?/);
       if (tableColMatch && paramIndex < params.length) {
+        console.log('[Supabase Adapter] Using table.column pattern:', tableColMatch[2], '=', params[paramIndex]);
         query = query.eq(tableColMatch[2], params[paramIndex]);
         paramIndex++;
         continue;
@@ -187,6 +200,7 @@ class SupabaseAdapter {
       // Handle "column = ?" pattern
       const eqMatch = condition.match(/(\w+)\s*=\s*\?/);
       if (eqMatch && paramIndex < params.length) {
+        console.log('[Supabase Adapter] Using column pattern:', eqMatch[1], '=', params[paramIndex]);
         query = query.eq(eqMatch[1], params[paramIndex]);
         paramIndex++;
         continue;
