@@ -63,19 +63,20 @@ try {
 
 // CORS configuration to allow requests from Vercel frontend
 const corsOptions = {
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://autos-direct-copy.vercel.app',
-    'https://autos-direct-copy-npn58n1s2-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-gror20anm-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-8enxxthyn-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-llcoybx5k-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-3mvjqx35a-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-dw3pes44v-amielclementes-projects.vercel.app',
-    'https://autos-direct-copy-hv24gsfjp-amielclementes-projects.vercel.app',
-    'https://autos-direct.com.au'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost for development
+    if (origin.includes('localhost')) return callback(null, true);
+    
+    // Allow all Vercel preview and production URLs
+    if (origin.includes('vercel.app') || origin.includes('autos-direct.com.au')) {
+      return callback(null, true);
+    }
+    
+    callback(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
