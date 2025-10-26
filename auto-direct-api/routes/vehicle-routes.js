@@ -1,21 +1,8 @@
 // '/vehicle' api route
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql2')
-const { connectionConfig } = require('../config/connectionsConfig.js');
 const verifyToken = require('../middleware/authentication');
 const authorizeUser = require('../middleware/authorization');
-const pool = mysql.createPool(connectionConfig);
-
-// Add error handling for database connection
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('Database connection failed:', err.message);
-  } else {
-    console.log('Database connected successfully');
-    connection.release();
-  }
-});
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -59,7 +46,7 @@ const insertVehicle =  async (req, res, next) => {
 
 
 
-    pool.query(vehicleQuery, [vehicleNewID, makeID, modelName, bodyType, fuelType, driveType, cylinders, doors, transmission, colour, price, description, approvalStatus], (err, result) => {
+    req.req.pool.query(vehicleQuery, [vehicleNewID, makeID, modelName, bodyType, fuelType, driveType, cylinders, doors, transmission, colour, price, description, approvalStatus], (err, result) => {
         if (err) {
           console.error('Unable to insert vehicle: ', err);
           return res.status(500).send('Server error');
@@ -104,7 +91,7 @@ const insertVehicleImages = (req, res) => {
         const imageOrder = imageOrderMap[originalName];
 
         return new Promise((resolve, reject) => {
-            pool.query(insertImageQuery, [imageNewID, vehicleId, fileName, imageOrder], (err, result) => {
+            req.pool.query(insertImageQuery, [imageNewID, vehicleId, fileName, imageOrder], (err, result) => {
                 if (err) {
                     console.log('Unable to insert image: ', err);
                     reject(err);
@@ -154,7 +141,7 @@ router.put('/edit-vehicle/:vehicleID', upload.array('newImages', 10), async (req
                 const values = Object.values(updates);
                 const updateVehicleQuery = `UPDATE vehicles SET ${columns} WHERE vehicleID = ?`;
 
-                pool.query(updateVehicleQuery, [...values, vehicleID]);
+                req.pool.query(updateVehicleQuery, [...values, vehicleID]);
                 console.log(`Vehicle ${vehicleID} attributes updated.`);
             }
         }
@@ -172,7 +159,7 @@ router.put('/edit-vehicle/:vehicleID', upload.array('newImages', 10), async (req
             const deleteImageQuery = `DELETE FROM vehicle_images WHERE imageID = ? AND vehicleID = ?`;
             if (deletedImages.length > 0) {
                 for (const image of deletedImages) {
-                    pool.query(deleteImageQuery, [image.imageID, vehicleID]);
+                    req.pool.query(deleteImageQuery, [image.imageID, vehicleID]);
                     console.log(`Deleted image record for imageID: ${image.imageID}`);
                 }
             }
@@ -192,7 +179,7 @@ router.put('/edit-vehicle/:vehicleID', upload.array('newImages', 10), async (req
             for (const file of newUploadedFiles) {
                 const newImageID = uuidv4();
 
-                pool.query(insertImageQuery, [newImageID, vehicleID, file.filename, 9999]); // High image order will be changed
+                req.pool.query(insertImageQuery, [newImageID, vehicleID, file.filename, 9999]); // High image order will be changed
                 console.log(`Inserted new image record for filename: ${file.filename}`);
                 insertedNewImageIds.push({
                     originalname: file.originalname, // Used for matching later
@@ -223,7 +210,7 @@ router.put('/edit-vehicle/:vehicleID', upload.array('newImages', 10), async (req
                 }
 
                 if (actualImageID) {
-                    pool.query(updateOrderQuery, [image.order + 1, actualImageID, vehicleID]); // imageOrder is array position, so add 1
+                    req.pool.query(updateOrderQuery, [image.order + 1, actualImageID, vehicleID]); // imageOrder is array position, so add 1
                 }
             }
             console.log(`Image orders updated for vehicle: ${vehicleID}`);
@@ -303,7 +290,7 @@ router.get('/browse-vehicles', (req, res) => {
   addFilter(fuel, 'v.fuel');
   addFilter(driveType, 'v.driveType');
 
-  pool.query(browseQuery, values, (err, result) => {
+  req.pool.query(browseQuery, values, (err, result) => {
     if (err) {
       console.error('Error retrieving vehicles: ', err);
       // Return empty array instead of crashing
@@ -332,7 +319,7 @@ router.get('/vehicle-information/:id', async (req, res) => {
     const imagesQuery = `SELECT imageID, path, imageOrder FROM vehicle_images WHERE vehicleID = ?
     ORDER BY imageOrder ASC;`;
 
-    pool.query(carQuery, [id], (err, carResult) => {
+    req.pool.query(carQuery, [id], (err, carResult) => {
         if (err) {
             console.error('Error retrieving vehicle: ', err);
             return res.status(500).send('Server unable to retrieve vehicle');
@@ -342,7 +329,7 @@ router.get('/vehicle-information/:id', async (req, res) => {
             return res.status(404).send('Vehicle not found');
         }
 
-        pool.query(imagesQuery, [id], (imgErr, imageResults) => {
+        req.pool.query(imagesQuery, [id], (imgErr, imageResults) => {
             if (imgErr) {
                 console.error('Error retrieving images: ', imgErr);
                 return res.status(500).send('Server unable to retrieve vehicle images');
@@ -398,7 +385,7 @@ router.get('/manage-vehicles', (req, res) => {
 
     allVehiclesQuery += ` ORDER BY m.makeName ASC`;
 
-    pool.query(allVehiclesQuery, queryParams, (err, result) => {
+    req.pool.query(allVehiclesQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error searching for vehicles: ', err);
             return res.status(500).send('Server unable to search for vehicles');
@@ -419,7 +406,7 @@ router.post('/manage-vehicles/approve/:id', async (req, res) => {
     const approveQuery = `UPDATE vehicles SET approvalStatus = 'Approved'
     WHERE vehicleID = ?`;
 
-    pool.query(approveQuery, [id], (err, result) => {
+    req.pool.query(approveQuery, [id], (err, result) => {
         if (err) {
             console.error('Error approving vehicle:', err);
             return res.status(500).send('Server unable to approve vehicle');
@@ -442,7 +429,7 @@ router.post('/manage-vehicles/reject/:id', async (req, res) => {
     const denyQuery = `UPDATE vehicles SET approvalStatus = 'Denied'
     WHERE vehicleID = ?`;
 
-    pool.query(denyQuery, [id], (err, result) => {
+    req.pool.query(denyQuery, [id], (err, result) => {
         if (err) {
             console.error('Error rejecting vehicle:', err);
             return result.status(500).send('Server unable to reject vehicle');
@@ -467,7 +454,7 @@ router.post('/manage-vehicles/delete/:id', async (req, res) => {
     const deleteQuery = `UPDATE vehicles SET deletedStatus = 'Deleted'
     WHERE vehicleID = ?`;
 
-    pool.query(deleteQuery, [id], (err, result) => {
+    req.pool.query(deleteQuery, [id], (err, result) => {
         if (err) {
             console.error('Error deleting vehicle:', err);
             return result.status(500).send('Server unable to delete vehicle');
@@ -501,7 +488,7 @@ router.post('/request-advice/', async (req, res) => {
     const { requester, vehicleID, description } = req.body;
 
     
-    pool.query(adviceRequestQuery, [requestID, requester, vehicleID, status, description], (err, result) => {
+    req.pool.query(adviceRequestQuery, [requestID, requester, vehicleID, status, description], (err, result) => {
         if (err) {
           console.error('Unable to submit advice request: ', err);
           return res.status(500).send('Server error');
@@ -524,7 +511,7 @@ router.post('/save-vehicle/add', [verifyToken, authorizeUser], (req, res) => {
 
     const existingSaveQuery = `SELECT * FROM saved_vehicle WHERE userID = ? AND vehicleID = ?`;
 
-    pool.query(existingSaveQuery, [userID, vehicleID], (err, rows) => {
+    req.pool.query(existingSaveQuery, [userID, vehicleID], (err, rows) => {
         if (err) {
             console.error('Database error checking existing save:', err);
             return res.status(500).json({ error: err.message });
@@ -537,7 +524,7 @@ router.post('/save-vehicle/add', [verifyToken, authorizeUser], (req, res) => {
         // If no existing save, proceed to insert
         const saveVehicleQuery = `INSERT INTO saved_vehicle (savedID, userID, vehicleID, savedAt) VALUES (?, ?, ?, ?)`;
 
-        pool.query(saveVehicleQuery, [savedID, userID, vehicleID, formattedDateTime], (error, result) => {
+        req.pool.query(saveVehicleQuery, [savedID, userID, vehicleID, formattedDateTime], (error, result) => {
             if (error) {
                 console.error('Database error inserting saved vehicle:', error);
                 return res.status(500).json({ error: error.message });
@@ -560,7 +547,7 @@ router.post('/save-vehicle/remove', [verifyToken, authorizeUser ], async (req, r
 
     const unsaveVehicleQuery = `DELETE FROM saved_vehicle WHERE userID = ? AND vehicleID = ?`;
 
-    pool.query(unsaveVehicleQuery, [userID, vehicleID], (err, result) => {
+    req.pool.query(unsaveVehicleQuery, [userID, vehicleID], (err, result) => {
         if (err) {
             console.error('Unable to unsave vehicle:', err);
             return res.status(500).send('Server error unsaving vehicle:');
