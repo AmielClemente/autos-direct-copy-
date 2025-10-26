@@ -16,6 +16,10 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/auto-direct-app/index.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/auto-direct-api/index.js"
     },
