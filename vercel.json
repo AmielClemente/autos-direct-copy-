@@ -80,7 +80,7 @@
       "destination": "/auto-direct-api/index.js"
     },
     {
-      "source": "/:path*",
+      "source": "/((?!assets).*)",
       "destination": "/auto-direct-app/index.html"
     }
   ],
