@@ -61,25 +61,29 @@ try {
   console.log('Running without Supabase, using MySQL for development');
 }
 
-// Create a simple connection pool with error handling for MySQL (development)
+// Create a simple connection pool with error handling for MySQL (development only)
 let pool;
-try {
-  // Try to create the connection pool
-  pool = mysql.createPool(connectionConfig);
-  
-  // Test the connection
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Database connection failed:', err.message);
-      console.log('Running without database connection...');
-    } else {
-      console.log('Database connected successfully');
-      connection.release();
-    }
-  });
-} catch (error) {
-  console.error('Failed to initialize database pool:', error.message);
-  console.log('Running without database connection...');
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    // Try to create the connection pool
+    pool = mysql.createPool(connectionConfig);
+    
+    // Test the connection
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Database connection failed:', err.message);
+        console.log('Running without database connection...');
+      } else {
+        console.log('Database connected successfully');
+        connection.release();
+      }
+    });
+  } catch (error) {
+    console.error('Failed to initialize database pool:', error.message);
+    console.log('Running without database connection...');
+  }
+} else {
+  console.log('Production mode: Skipping MySQL pool creation');
 }
 
 // CORS configuration to allow requests from Vercel frontend
