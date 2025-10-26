@@ -35,18 +35,18 @@ router.get('/admin-requests', async (req, res) => {
 				// Get customer info
 				if (booking.userID) {
 					try {
-						const { data: userResult } = await supabase
-							.from('users')
-							.select('firstName, lastName, emailAddress, phone')
-							.eq('userID', booking.userID)
-							.single();
-							
-							if (userResult && userResult.length > 0) {
-								const user = userResult[0];
-								customerName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
-								customerEmail = user.emailAddress || 'N/A';
-								customerPhone = user.phone || 'N/A';
-							}
+					const { data: userResult } = await supabase
+						.from('users')
+						.select('firstName, lastName, emailAddress, phone')
+						.eq('userID', booking.userID)
+						.single();
+						
+						if (userResult) {
+							const user = userResult;
+							customerName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
+							customerEmail = user.emailAddress || 'N/A';
+							customerPhone = user.phone || 'N/A';
+						}
 						} catch (userErr) {
 							console.warn('Error fetching user info:', userErr);
 						}
@@ -55,25 +55,28 @@ router.get('/admin-requests', async (req, res) => {
 					// Get vehicle info
 					if (booking.vehicleID) {
 						try {
-							const vehicleResult = await new Promise((resolve, reject) => {
-								pool.query(
-									'SELECT v.modelName, v.bodyType, v.colour, v.price, m.makeName FROM vehicles v LEFT JOIN makes m ON v.makeID = m.makeID WHERE v.vehicleID = ?',
-									[booking.vehicleID],
-									(err, result) => {
-										if (err) reject(err);
-										else resolve(result);
-									}
-								);
-							});
+						// Get vehicle info from Supabase
+						const { data: vehicleData } = await supabase
+							.from('vehicles')
+							.select('modelname, bodytype, colour, price, makeid')
+							.eq('vehicleid', booking.vehicleID)
+							.single();
+						
+						if (vehicleData) {
+							// Get make name
+							const { data: makeData } = await supabase
+								.from('makes')
+								.select('makename')
+								.eq('makeid', vehicleData.makeid)
+								.single();
 							
-							if (vehicleResult && vehicleResult.length > 0) {
-								const vehicle = vehicleResult[0];
-								const make = vehicle.makeName || '';
-								const model = vehicle.modelName || '';
-								const bodyType = vehicle.bodyType || '';
-								vehicleInfo = `${make} ${model} ${bodyType}`.trim() || 'N/A';
-								price = vehicle.price;
-							}
+							const vehicle = vehicleData;
+							const make = (makeData && makeData.makename) || '';
+							const model = vehicle.modelname || '';
+							const bodyType = vehicle.bodytype || '';
+							vehicleInfo = `${make} ${model} ${bodyType}`.trim() || 'N/A';
+							price = vehicle.price;
+						}
 						} catch (vehicleErr) {
 							console.warn('Error fetching vehicle info:', vehicleErr);
 						}
