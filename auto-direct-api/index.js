@@ -29,11 +29,24 @@ const { createClient } = require('@supabase/supabase-js');
 // Initialize Supabase client for production
 let supabase;
 try {
+  console.log('Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'NOT SET',
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
+    supabaseConfig: supabaseConfig
+  });
+  
   if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
     supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
     console.log('Supabase client initialized for production');
   } else {
     console.log('Supabase not configured, using MySQL for development');
+    console.log('Reason:', {
+      isProduction: process.env.NODE_ENV === 'production',
+      hasConfig: !!supabaseConfig,
+      hasUrl: !!supabaseConfig?.url,
+      hasServiceRoleKey: !!supabaseConfig?.serviceRoleKey
+    });
   }
 } catch (error) {
   console.error('Error initializing Supabase:', error.message);
