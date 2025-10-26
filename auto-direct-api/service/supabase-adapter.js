@@ -135,7 +135,30 @@ class SupabaseAdapter {
         // Add makeName to each vehicle
         data.forEach(v => {
           v.makeName = makeMap[v.makeID];
-          v.mainImage = null; // No image support yet
+          v.mainImage = null; // Will be set below
+        });
+        
+        // Get vehicle images
+        const vehicleIds = [...new Set(data.map(v => v.vehicleID))];
+        const { data: images } = await this.supabase
+          .from('vehicle_images')
+          .select('vehicleid, path, imageorder')
+          .in('vehicleid', vehicleIds)
+          .eq('imageorder', 1);
+        
+        // Map images to vehicles
+        const imageMap = {};
+        if (images) {
+          images.forEach(img => {
+            if (!imageMap[img.vehicleid]) {
+              imageMap[img.vehicleid] = img.path;
+            }
+          });
+        }
+        
+        // Add images to vehicles
+        data.forEach(v => {
+          v.mainImage = imageMap[v.vehicleID] || null;
         });
       }
     }
