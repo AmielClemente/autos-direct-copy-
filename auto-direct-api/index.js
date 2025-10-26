@@ -33,8 +33,10 @@ try {
   console.log('Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'NOT SET',
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
-    supabaseConfig: supabaseConfig
+    SUPABASE_URL_VALUE: process.env.SUPABASE_URL?.substring(0, 30) + '...' || 'NOT SET',
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET (LENGTH: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'NOT SET',
+    supabaseConfig_url: supabaseConfig.url ? 'SET' : 'NOT SET',
+    supabaseConfig_serviceRoleKey: supabaseConfig.serviceRoleKey ? 'SET (LENGTH: ' + supabaseConfig.serviceRoleKey.length + ')' : 'NOT SET'
   });
   
   if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
