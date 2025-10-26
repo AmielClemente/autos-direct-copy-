@@ -197,13 +197,10 @@ class SupabaseAdapter {
       }
     }
     
-    // If this is a single vehicle query (WHERE vehicleID = ?)
-    const singleVehicleMatch = sql.match(/where\s+vehicleid\s*=\s*\?/i);
-    if (singleVehicleMatch && data && data.length > 0) {
-      console.log('[Supabase Adapter] Single vehicle query, returning first result');
-      return data[0];
-    }
-    
+    // Handle single vehicle queries for detail page
+    // The route expects an array with one item
+    // Don't return single object, keep as array
+    console.log('[Supabase Adapter] Returning', data?.length || 0, 'rows');
     return data || [];
   }
 
