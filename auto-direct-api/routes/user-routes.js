@@ -80,7 +80,8 @@ router.post('/login', async (req, res) => {
 	}
 	
 	try {
-		const rows = await getUserByEmail(emailAddress);
+		// Pass req.pool to the service function
+		const rows = await getUserByEmail(emailAddress, req.pool);
 		if (rows.length == 0) {
 			return res.status(401).json({ message: 'There is no user by this email.' });
 		}

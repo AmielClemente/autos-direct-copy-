@@ -467,7 +467,8 @@ router.post('/manage-vehicles/delete/:id', async (req, res) => {
 
 router.get('/makes', async (req, res) => {
 	try {
-		const makes = await getAllMakes();
+		// Pass req.pool to the service function
+		const makes = await getAllMakes(req.pool);
 		res.status(200).json({ makes: makes });
 	} catch (error) {
 		console.error('Error retrieving Makes:', error);
