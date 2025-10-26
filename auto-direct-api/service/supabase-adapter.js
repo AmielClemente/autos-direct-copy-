@@ -77,7 +77,8 @@ class SupabaseAdapter {
     const mainTable = fromMatch[1];
     console.log('[Supabase Adapter] Main table:', mainTable);
     
-    // For vehicles query, get vehicles with basic info
+    // For browse-vehicles query, get vehicles and add make info
+    // SELECT v.*, vi.path AS mainImage, m.makeName
     let query = this.supabase.from(mainTable).select('*');
     
     // Apply WHERE clause
@@ -94,6 +95,31 @@ class SupabaseAdapter {
     }
     
     console.log('[Supabase Adapter] JOIN results:', data?.length || 0, 'rows');
+    
+    // For vehicles, we need to add make names manually
+    if (mainTable === 'vehicles' && data && data.length > 0) {
+      // Get make IDs
+      const makeIds = [...new Set(data.map(v => v.makeID))];
+      if (makeIds.length > 0) {
+        const { data: makes } = await this.supabase
+          .from('makes')
+          .select('makeID, makeName')
+          .in('makeID', makeIds);
+        
+        // Map makes to vehicles
+        const makeMap = {};
+        if (makes) {
+          makes.forEach(m => { makeMap[m.makeID] = m.makeName; });
+        }
+        
+        // Add makeName to each vehicle
+        data.forEach(v => {
+          v.makeName = makeMap[v.makeID];
+          v.mainImage = null; // No image support yet
+        });
+      }
+    }
+    
     return data || [];
   }
 
