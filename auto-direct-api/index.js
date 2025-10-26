@@ -237,6 +237,10 @@ try {
 
 // End of database connection test
 
-server.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`)
-})
+// For Vercel, export the app instead of listening
+// For local development, uncomment the server.listen below
+// server.listen(PORT, () => {
+//   console.log(`App listening on port ${PORT}`)
+// })
+
+module.exports = app;
