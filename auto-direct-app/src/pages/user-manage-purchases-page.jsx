@@ -1,19 +1,52 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Cookies from 'js-cookie';
 import PurchaseRow from "../components/purchase-row";
 import api from "../data/api-calls";
 
 function UserPurchasePage() {
   const [purchases, setPurchases] = useState([]);
+  const navigate = useNavigate();
 
 	useEffect(() => {
 		const token = Cookies.get("auto-direct-token");
+		console.log('Token from cookies:', token ? 'Found' : 'Not found');
+		
+		if (!token) {
+			console.error('No authentication token found - redirecting to login');
+			navigate('/login');
+			return;
+		}
+		
+		console.log('Fetching purchases with token:', token.substring(0, 20) + '...');
+		
 		fetch(api + '/purchases/my-purchases', {method: 'GET', headers: {'Authorization': `Bearer ${token}`} })
-			.then((res) => { return res.json() })
+			.then((res) => { 
+				console.log('Response status:', res.status);
+				if (!res.ok) {
+					if (res.status === 401) {
+						console.error('Unauthorized - redirecting to login');
+						navigate('/login');
+						return;
+					}
+					throw new Error(`HTTP error! status: ${res.status}`);
+				}
+				return res.json() 
+			})
 			.then((data) => { 
-				setPurchases(data.result);
+				console.log('Response data:', data);
+				if (data && data.result) {
+					setPurchases(data.result);
+				} else {
+					console.error('Invalid response data:', data);
+					setPurchases([]);
+				}
+			})
+			.catch((error) => {
+				console.error('Error fetching purchases:', error);
+				setPurchases([]);
 			});
-	}, []);
+	}, [navigate]);
 
 	const handleSaveClick = (p) => {
 		const token = Cookies.get("auto-direct-token");
@@ -34,7 +67,7 @@ function UserPurchasePage() {
 		fetch(api + '/purchases/cancel-purchase', 
 			{
 				method: 'PUT', 
-				headers: {"Content-Type": "application/json", "Authorization": token}, 
+				headers: {"Content-Type": "application/json", "Authorization": `Bearer ${token}`}, 
 				body: JSON.stringify({purchaseID: newP.purchaseID}) 
 			})
 		.then((res) => {

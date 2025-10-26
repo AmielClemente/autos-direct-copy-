@@ -32,6 +32,7 @@ import ManageManufacturersPage from "./pages/manage-manufacturers-page";
 import ManageDealershipsPage from "./pages/manage-dealerships-page";
 import ManageMyRequestsPage from "./pages/manage-myrequests-page"; // this is a regular user page to view and manage sent requests and their status
 import UserManagePurchasesPage from "./pages/user-manage-purchases-page"; // this is a regular user page to view and manage sent requests and their status
+import CustomerChatbotInquiries from "./pages/customer-chatbot-inquiries"; // customer-facing chatbot inquiries page
 import InternalRegisterPage from "./pages/internal-register-page";
 import Chatbot from "./components/Chatbot";
 import ChatbotInquiries from "./pages/chatbot-inquiries";
@@ -70,6 +71,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/internal-register" element={<InternalRegisterPage />} />
           <Route path="/manage-my-purchases" element={<UserManagePurchasesPage />} />
+          <Route path="/my-support-inquiries" element={<CustomerChatbotInquiries />} />
           <Route path="/purchase-flow" element={<PurchaseFlowPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
