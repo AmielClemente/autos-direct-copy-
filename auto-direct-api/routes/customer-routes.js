@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql2')
-const { connectionConfig } = require('../config/connectionsConfig.js');
-const pool = mysql.createPool(connectionConfig);
+// Use req.pool from middleware instead of creating a local pool
 const multer = require('multer');
 
 /*

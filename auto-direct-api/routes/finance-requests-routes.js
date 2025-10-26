@@ -6,9 +6,8 @@ const verifyToken = require('../middleware/authentication.js');
 // Submit new finance request
 router.post('/submit-request', verifyToken, async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const {
             vehicleID,
@@ -66,9 +65,8 @@ router.post('/submit-request', verifyToken, async (req, res) => {
 // Get all finance requests for admin dashboard
 router.get('/admin-requests', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const financeQuery = `
             SELECT 
@@ -225,9 +223,8 @@ router.get('/admin-requests', async (req, res) => {
 // Admin: Assign dealer to finance request
 router.put('/admin/assign-dealer', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, dealerID } = req.body;
 
@@ -262,9 +259,8 @@ router.put('/admin/assign-dealer', async (req, res) => {
 // Admin: Mark finance request as completed
 router.put('/admin/mark-completed', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, adminNotes } = req.body;
 
@@ -299,9 +295,8 @@ router.put('/admin/mark-completed', async (req, res) => {
 // Admin: Cancel finance request
 router.put('/admin/cancel-request', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, adminNotes } = req.body;
 

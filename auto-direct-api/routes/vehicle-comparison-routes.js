@@ -7,9 +7,8 @@ const { sendComparisonConfirmationEmail } = require('../service/email-service.js
 // Submit new vehicle comparison request
 router.post('/submit-comparison', verifyToken, async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const {
             primaryVehicleID,
@@ -133,9 +132,8 @@ router.post('/submit-comparison', verifyToken, async (req, res) => {
 // Get all vehicle comparison requests for admin dashboard
 router.get('/admin-comparisons', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const comparisonQuery = `
             SELECT 
@@ -308,9 +306,8 @@ router.get('/admin-comparisons', async (req, res) => {
 // Admin: Assign dealer to comparison request
 router.put('/admin/assign-dealer', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, dealerID } = req.body;
 
@@ -345,9 +342,8 @@ router.put('/admin/assign-dealer', async (req, res) => {
 // Admin: Mark comparison request as completed
 router.put('/admin/mark-completed', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, adminNotes } = req.body;
 
@@ -382,9 +378,8 @@ router.put('/admin/mark-completed', async (req, res) => {
 // Admin: Cancel comparison request
 router.put('/admin/cancel-request', async (req, res) => {
     try {
-        const mysql = require('mysql2');
-        const { connectionConfig } = require('../config/connectionsConfig.js');
-        const pool = mysql.createPool(connectionConfig);
+        // Use req.pool from middleware
+        const pool = req.pool;
 
         const { requestID, adminNotes } = req.body;
 

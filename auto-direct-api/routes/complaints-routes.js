@@ -5,7 +5,7 @@ const { connectionConfig } = require('../config/connectionsConfig');
 const nodemailer = require('nodemailer');
 const emailConfig = require('../email-config');
 
-const pool = mysql.createPool(connectionConfig);
+// Use req.pool from middleware instead of creating a local pool
 
 // Email configuration
 const transporter = nodemailer.createTransport(emailConfig);

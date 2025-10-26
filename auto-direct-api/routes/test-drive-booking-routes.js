@@ -108,9 +108,8 @@ router.put('/admin/update-status', async (req, res) => {
 			return res.status(400).json({ error: 'Missing bookingID or status' });
 		}
 
-		const mysql = require('mysql2');
-		const { connectionConfig } = require('../config/connectionsConfig.js');
-		const pool = mysql.createPool(connectionConfig);
+		// Use req.pool from middleware
+		const pool = req.pool;
 		
 		const query = `UPDATE test_drive_bookings SET status = ? WHERE bookingID = ?`;
 		
@@ -141,9 +140,8 @@ router.put('/admin/assign-dealer', async (req, res) => {
 			return res.status(400).json({ error: 'Missing bookingID or dealerID' });
 		}
 
-		const mysql = require('mysql2');
-		const { connectionConfig } = require('../config/connectionsConfig.js');
-		const pool = mysql.createPool(connectionConfig);
+		// Use req.pool from middleware
+		const pool = req.pool;
 		
 		const query = `UPDATE test_drive_bookings SET dealerID = ? WHERE bookingID = ?`;
 		
