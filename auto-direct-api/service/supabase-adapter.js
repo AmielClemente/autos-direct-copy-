@@ -98,13 +98,20 @@ class SupabaseAdapter {
     
     // For vehicles, we need to add make names manually
     if (mainTable === 'vehicles' && data && data.length > 0) {
-      // PostgreSQL returns lowercase, convert to camelCase
+      // PostgreSQL returns lowercase, convert ALL columns to camelCase
       data.forEach(v => {
         v.vehicleID = v.vehicleid;
         v.makeID = v.makeid;
         v.modelName = v.modelname;
         v.bodyType = v.bodytype;
+        v.fuel = v.fuel;
         v.driveType = v.drivetype;
+        v.cylinders = v.cylinders;
+        v.doors = v.doors;
+        v.description = v.description;
+        v.price = v.price;
+        v.colour = v.colour;
+        v.transmission = v.transmission;
         v.approvalStatus = v.approvalstatus;
         v.deletedStatus = v.deletedstatus;
       });
