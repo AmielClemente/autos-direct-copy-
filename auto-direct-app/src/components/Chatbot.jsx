@@ -51,15 +51,15 @@ function Chatbot() {
   
   // Environment-based configuration
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://autos-direct-copy.vercel.app' 
+    ? 'https://autos-direct-copy-npn58n1s2-amielclementes-projects.vercel.app' 
     : 'http://localhost:3000';
 
   const SOCKET_URL = process.env.NODE_ENV === 'production'
-    ? 'https://autos-direct-copy.vercel.app'
+    ? 'https://autos-direct-copy-npn58n1s2-amielclementes-projects.vercel.app'
     : 'http://localhost:3000';
 
   const COMPLAINTS_URL = process.env.NODE_ENV === 'production'
-    ? 'https://autos-direct-copy.vercel.app/complaints'
+    ? 'https://autos-direct-copy-npn58n1s2-amielclementes-projects.vercel.app/complaints'
     : 'http://localhost:5173/complaints';
 
   // Quick action buttons with predefined messages
