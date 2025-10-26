@@ -82,7 +82,12 @@
     {
       "source": "/(.*)",
       "destination": "/auto-direct-app/:1",
-      "missing": "/auto-direct-app/index.html"
+      "missing": [
+        {
+          "type": 404,
+          "destination": "/auto-direct-app/index.html"
+        }
+      ]
     }
   ],
   "env": {
