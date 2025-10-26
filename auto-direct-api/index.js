@@ -36,6 +36,7 @@ const corsOptions = {
     'https://autos-direct-copy-gror20anm-amielclementes-projects.vercel.app',
     'https://autos-direct-copy-8enxxthyn-amielclementes-projects.vercel.app',
     'https://autos-direct-copy-llcoybx5k-amielclementes-projects.vercel.app',
+    'https://autos-direct-copy-3mvjqx35a-amielclementes-projects.vercel.app',
     'https://autos-direct.com.au'
   ],
   credentials: true,
