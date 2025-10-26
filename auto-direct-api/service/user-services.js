@@ -1,8 +1,7 @@
-const { getPool } = require('./db-singleton.js');
-
-const pool = getPool();
-
 const createUser = async (userNewID, user, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
 	try {
 		if (!dbClient && !pool) {
 			throw new Error('Database pool not initialized. Please set up Supabase environment variables.');
@@ -34,7 +33,12 @@ const createUser = async (userNewID, user, dbClient = null) => {
 	}
 }
 
-const getAllUsers = () => {
+const getAllUsers = (dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `SELECT userID, firstName, lastName, emailAddress, phone, createdTime, user_status 
 			FROM users 
@@ -49,7 +53,7 @@ const getAllUsers = () => {
 			ORDER BY user_status DESC, createdTime DESC`;
 
 		return new Promise((resolve, reject) => {
-			pool.query(query, (err, result) => {
+			db.query(query, (err, result) => {
 				if (err) reject(err);
 				resolve(result);
 			})
@@ -60,13 +64,17 @@ const getAllUsers = () => {
 }
 
 const getUserByEmail = (emailAddress, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
+	if (!db) {
+		console.error('getUserByEmail: Database pool not initialized');
+		return Promise.resolve([]);
+	}
+	
 	try {
-		const db = dbClient || pool;
-		if (!db) {
-			console.error('getUserByEmail: Database pool not initialized');
-			return Promise.resolve([]);
-		}
-
 		const query = `SELECT * FROM users WHERE (users.emailAddress = ?)`;
 		return new Promise((resolve, reject) => {
 			db.query(query, [emailAddress],
@@ -85,11 +93,16 @@ const getUserByEmail = (emailAddress, dbClient = null) => {
 	}
 };
 
-const getUserInfoByID = async (userID) => {
+const getUserInfoByID = async (userID, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `SELECT firstName, lastName, emailAddress, phone, createdTime, streetNo, streetName, suburb, postcode, user_status FROM users WHERE users.userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [userID],
+			db.query(query, [userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result[0]);
@@ -101,11 +114,16 @@ const getUserInfoByID = async (userID) => {
 	}
 }
 
-const getUserByID = async (userID) => {
+const getUserByID = async (userID, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `SELECT * FROM users WHERE users.userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [userID],
+			db.query(query, [userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result[0]);
@@ -117,11 +135,16 @@ const getUserByID = async (userID) => {
 	}
 }
 
-const updateUser = async (userID, firstName, lastName, emailAddress, phoneNumber, user_status) => {
+const updateUser = async (userID, firstName, lastName, emailAddress, phoneNumber, user_status, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `UPDATE users SET firstName = ?, lastName = ?, emailAddress = ?, phone = ?, user_status = ? WHERE userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [firstName, lastName, emailAddress, phoneNumber, user_status, userID],
+			db.query(query, [firstName, lastName, emailAddress, phoneNumber, user_status, userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result);
@@ -133,11 +156,16 @@ const updateUser = async (userID, firstName, lastName, emailAddress, phoneNumber
 	}
 }
 
-const updateUserAsUser = async (userID, firstName, lastName, emailAddress, phoneNumber, streetNo, streetName, suburb, postcode) => {
+const updateUserAsUser = async (userID, firstName, lastName, emailAddress, phoneNumber, streetNo, streetName, suburb, postcode, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `UPDATE users SET firstName = ?, lastName = ?, emailAddress = ?, phone = ?, streetNo = ?, streetName = ?, suburb = ?, postcode = ? WHERE userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [firstName, lastName, emailAddress, phoneNumber, streetNo, streetName, suburb, postcode, userID],
+			db.query(query, [firstName, lastName, emailAddress, phoneNumber, streetNo, streetName, suburb, postcode, userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result);
@@ -149,11 +177,16 @@ const updateUserAsUser = async (userID, firstName, lastName, emailAddress, phone
 	}
 }
 
-const updateUserPassword = async(userID, passwordHash) => {
+const updateUserPassword = async(userID, passwordHash, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		const query = `UPDATE users SET passwordHash = ? WHERE userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [passwordHash, userID],
+			db.query(query, [passwordHash, userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result);
@@ -165,12 +198,17 @@ const updateUserPassword = async(userID, passwordHash) => {
 	}
 }
 
-const disableUserByUserID = async (userID) => {
+const disableUserByUserID = async (userID, dbClient = null) => {
+	// Use the fallback pool from db-singleton only in development
+	const { getPool } = require('./db-singleton.js');
+	const pool = getPool();
+	const db = dbClient || pool;
+	
 	try {
 		// First get the current email to modify it
 		const getUserQuery = `SELECT emailAddress FROM users WHERE userID = ?`;
 		const userResult = await new Promise((resolve, reject) => {
-			pool.query(getUserQuery, [userID], (err, result) => {
+			db.query(getUserQuery, [userID], (err, result) => {
 				if (err) reject(err);
 				resolve(result);
 			});
@@ -187,7 +225,7 @@ const disableUserByUserID = async (userID) => {
 		// Update user status and modify email to free it up
 		const query = `UPDATE users SET user_status = ?, emailAddress = ? WHERE userID = ?`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, ["Inactive", modifiedEmail, userID],
+			db.query(query, ["Inactive", modifiedEmail, userID],
 				(err, result) => {
 					if (err) reject(err);
 					resolve(result);

@@ -5,34 +5,195 @@ class SupabaseAdapter {
   }
 
   // Adapt Supabase to work like MySQL pool.query()
-  query(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      // For SELECT queries
-      if (sql.toLowerCase().trim().startsWith('select')) {
-        // Extract table name from SQL
-        const match = sql.match(/from\s+(\w+)/i);
-        if (!match) {
-          return reject(new Error('Could not extract table name from SQL'));
-        }
-        const table = match[1];
-        
-        // Get all rows from Supabase
-        this.supabase
-          .from(table)
-          .select('*')
-          .then(({ data, error }) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(data || []);
-            }
-          });
-      } else {
-        // For other queries, log and return empty result
-        console.log('Supabase adapter: Unsupported query type:', sql.substring(0, 50));
-        resolve([]);
+  async query(sql, params = []) {
+    const queryType = sql.toLowerCase().trim().split(' ')[0];
+    
+    try {
+      switch(queryType) {
+        case 'select':
+          return await this.handleSelect(sql, params);
+        case 'insert':
+          return await this.handleInsert(sql, params);
+        case 'update':
+          return await this.handleUpdate(sql, params);
+        case 'delete':
+          return await this.handleDelete(sql, params);
+        default:
+          console.warn('Unsupported query type:', sql.substring(0, 100));
+          return [];
+      }
+    } catch (error) {
+      console.error('Supabase adapter error:', error.message);
+      throw error;
+    }
+  }
+
+  async handleSelect(sql, params) {
+    // Parse table name
+    const fromMatch = sql.match(/from\s+(\w+)/i);
+    if (!fromMatch) {
+      console.error('Could not extract table name from SQL');
+      return [];
+    }
+    const table = fromMatch[1];
+    
+    // Handle JOIN queries specially
+    if (sql.toLowerCase().includes('join')) {
+      return await this.handleJoinQuery(sql, params);
+    }
+    
+    // Start building query
+    let query = this.supabase.from(table).select('*');
+    
+    // Parse WHERE clauses
+    const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
+    if (whereMatch) {
+      const whereClause = whereMatch[1].trim();
+      query = this.applyWhereClause(query, whereClause, params);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async handleJoinQuery(sql, params) {
+    // Try to get main table and build query step by step
+    // This is a simplified JOIN handler - gets main table data only
+    const fromMatch = sql.match(/from\s+(\w+)/i);
+    if (!fromMatch) return [];
+    
+    const mainTable = fromMatch[1];
+    let query = this.supabase.from(mainTable).select('*');
+    
+    // Apply WHERE clause from main table
+    const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
+    if (whereMatch) {
+      const whereClause = whereMatch[1].trim();
+      query = this.applyWhereClause(query, whereClause, params);
+    }
+    
+    const { data, error } = await query;
+    if (error) {
+      console.error('JOIN query simplified, using main table only:', error.message);
+      throw error;
+    }
+    
+    return data || [];
+  }
+
+  async handleInsert(sql, params) {
+    const insertMatch = sql.match(/insert\s+into\s+(\w+)\s*\((.+?)\)\s*values/i);
+    if (!insertMatch) {
+      throw new Error('Could not parse INSERT statement');
+    }
+    const table = insertMatch[1];
+    const columns = insertMatch[2].split(',').map(c => c.trim().replace(/[`"]/g, ''));
+    
+    // Map params to object
+    const data = {};
+    columns.forEach((col, idx) => {
+      if (params[idx] !== undefined) {
+        data[col] = params[idx];
       }
     });
+    
+    const { data: result, error } = await this.supabase
+      .from(table)
+      .insert(data)
+      .select();
+    
+    if (error) throw error;
+    return result || { insertId: result[0]?.id };
+  }
+
+  async handleUpdate(sql, params) {
+    const updateMatch = sql.match(/update\s+(\w+)\s+set\s+(.+?)\s+where/i);
+    if (!updateMatch) {
+      throw new Error('Could not parse UPDATE statement');
+    }
+    const table = updateMatch[1];
+    const setClause = updateMatch[2];
+    
+    // Parse SET clause
+    const updates = {};
+    setClause.split(',').forEach(item => {
+      const [key, value] = item.split('=').map(s => s.trim());
+      const cleanKey = key.replace(/[`"]/g, '');
+      // Handle placeholders
+      if (value === '?') {
+        // Skip, will be handled by params
+      } else {
+        updates[cleanKey] = value.replace(/['"]/g, '');
+      }
+    });
+    
+    // Apply WHERE to get rows to update
+    const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
+    if (whereMatch) {
+      // Simple WHERE handler
+      const whereClause = whereMatch[1].trim();
+      let whereQuery = this.supabase.from(table);
+      whereQuery = this.applyWhereClause(whereQuery, whereClause, params);
+      
+      const { data: result, error } = await whereQuery.update(updates).select();
+      if (error) throw error;
+      return result || { affectedRows: 1 };
+    }
+    
+    throw new Error('UPDATE without WHERE is dangerous');
+  }
+
+  async handleDelete(sql, params) {
+    const deleteMatch = sql.match(/delete\s+from\s+(\w+)/i);
+    if (!deleteMatch) {
+      throw new Error('Could not parse DELETE statement');
+    }
+    const table = deleteMatch[1];
+    
+    const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
+    if (!whereMatch) {
+      throw new Error('DELETE without WHERE is dangerous');
+    }
+    
+    const whereClause = whereMatch[1].trim();
+    let query = this.supabase.from(table);
+    query = this.applyWhereClause(query, whereClause, params);
+    
+    const { error } = await query.delete();
+    if (error) throw error;
+    return { affectedRows: 1 };
+  }
+
+  applyWhereClause(query, whereClause, params) {
+    // Handle simple WHERE conditions like "column = ?"
+    const conditions = whereClause.split(/\s+(and|or)\s+/i);
+    
+    conditions.forEach((condition, index) => {
+      if (index % 2 === 0) { // Condition part
+        const eqMatch = condition.match(/(\w+)\s*=\s*\?/);
+        if (eqMatch) {
+          const column = eqMatch[1];
+          const paramIndex = this.findParamIndex(whereClause, condition);
+          if (paramIndex < params.length) {
+            query = query.eq(column, params[paramIndex]);
+          }
+        } else {
+          const neMatch = condition.match(/(\w+)\s*!=\s*['"](\w+)['"]/);
+          if (neMatch) {
+            query = query.neq(neMatch[1], neMatch[2]);
+          }
+        }
+      }
+    });
+    
+    return query;
+  }
+
+  findParamIndex(sql, clause) {
+    // Simple approach: count ? before this clause
+    const beforeThis = sql.substring(0, sql.indexOf(clause));
+    return (beforeThis.match(/\?/g) || []).length;
   }
 }
 

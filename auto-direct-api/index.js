@@ -25,6 +25,7 @@ const PORT = process.env.PORT || 3000;
 const mysql = require('mysql2')
 const { connectionConfig, supabaseConfig } = require('./config/supabaseConfig');
 const { createClient } = require('@supabase/supabase-js');
+const { SupabaseAdapter } = require('./service/supabase-adapter');
 
 // Initialize Supabase client for production
 let supabase;
@@ -102,16 +103,18 @@ app.use(express.json()); // Needed to parse JSON bodies
 app.use((req, res, next) => {
   req.supabase = supabase;
   
-  // In production with Supabase, create a wrapper that makes Supabase work like MySQL pool
+  // In production with Supabase, use SupabaseAdapter to make Supabase work like MySQL pool
   if (supabase && process.env.NODE_ENV === 'production') {
+    const adapter = new SupabaseAdapter(supabase);
     req.pool = {
       query: (sql, params, callback) => {
-        console.log('Supabase query adapter:', sql.substring(0, 100));
-        // For now, return empty results
+        const result = adapter.query(sql, params);
         if (callback) {
-          callback(null, []);
+          result
+            .then(data => callback(null, data))
+            .catch(err => callback(err));
         }
-        return Promise.resolve([]);
+        return result;
       }
     };
   } else {

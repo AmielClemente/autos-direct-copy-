@@ -1,12 +1,17 @@
-const { getPool } = require('./db-singleton.js');
-
-const pool = getPool();
-
-const getMakeID = async (makeName) => {
+const getMakeID = async (makeName, dbClient = null) => {
 	try {
+		// Use the fallback pool from db-singleton only in development
+		const { getPool } = require('./db-singleton.js');
+		const pool = getPool();
+		const db = dbClient || pool;
+		
+		if (!db) {
+			throw new Error('No database client available');
+		}
+		
 		const query = `SELECT makeID FROM makes WHERE makes.makeName = ?`
 		return new Promise((resolve, reject) => {
-			pool.query(query, [makeName], 
+			db.query(query, [makeName], 
 			(err, result) => {
 				if (err) {reject(err)};
 				resolve(result[0].makeID);
@@ -33,36 +38,65 @@ const getAllMakes = async (dbClient = null, supabaseClient = null) => {
 			return data || [];
 		}
 
-		// Otherwise use MySQL
-		if (!pool && !dbClient) {
-			console.error('getAllMakes: No database pool or client provided');
-			return [];
-		}
-
-		const db = dbClient || pool;
-		const query = `SELECT * FROM makes`
-		return new Promise((resolve, reject) => {
-			db.query(query,
-			(err, result) => {
-				if (err) {
-					console.error('Error in getAllMakes:', err);
-					resolve([]); // Return empty array instead of rejecting
-				} else {
-					resolve(result);
-				}
+		// Otherwise use MySQL (development)
+		if (!dbClient) {
+			// Fallback to singleton pool only in development
+			const { getPool } = require('./db-singleton.js');
+			const pool = getPool();
+			const db = pool;
+			
+			if (!db) {
+				console.error('getAllMakes: No database pool available');
+				return [];
+			}
+			
+			const query = `SELECT * FROM makes`
+			return new Promise((resolve, reject) => {
+				db.query(query,
+				(err, result) => {
+					if (err) {
+						console.error('Error in getAllMakes:', err);
+						resolve([]); // Return empty array instead of rejecting
+					} else {
+						resolve(result);
+					}
+				});
 			});
-		});
+		} else {
+			// Use the provided dbClient
+			const query = `SELECT * FROM makes`
+			return new Promise((resolve, reject) => {
+				dbClient.query(query,
+				(err, result) => {
+					if (err) {
+						console.error('Error in getAllMakes:', err);
+						resolve([]); // Return empty array instead of rejecting
+					} else {
+						resolve(result);
+					}
+				});
+			});
+		}
 	} catch (err) {
 		console.error('Error in getAllMakes catch:', err);
 		return []; // Return empty array instead of throwing
 	}
 };
 
-const getMakeByName = async (makeName) => {
+const getMakeByName = async (makeName, dbClient = null) => {
 	try {
+		// Use the fallback pool from db-singleton only in development
+		const { getPool } = require('./db-singleton.js');
+		const pool = getPool();
+		const db = dbClient || pool;
+		
+		if (!db) {
+			throw new Error('No database client available');
+		}
+		
 		const query = `SELECT makeID, manufacturerID, makeName FROM makes WHERE makes.makeName = ?`
 		return new Promise((resolve, reject) => {
-			pool.query(query, [makeName], 
+			db.query(query, [makeName], 
 			(err, result) => {
 				if (err) {reject(err)};
 				resolve(result[0]);
