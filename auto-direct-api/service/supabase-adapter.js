@@ -166,34 +166,62 @@ class SupabaseAdapter {
   }
 
   applyWhereClause(query, whereClause, params) {
-    // Handle simple WHERE conditions like "column = ?"
-    const conditions = whereClause.split(/\s+(and|or)\s+/i);
+    // Remove parentheses
+    whereClause = whereClause.replace(/[()]/g, '');
     
-    conditions.forEach((condition, index) => {
-      if (index % 2 === 0) { // Condition part
-        const eqMatch = condition.match(/(\w+)\s*=\s*\?/);
-        if (eqMatch) {
-          const column = eqMatch[1];
-          const paramIndex = this.findParamIndex(whereClause, condition);
-          if (paramIndex < params.length) {
-            query = query.eq(column, params[paramIndex]);
-          }
-        } else {
-          const neMatch = condition.match(/(\w+)\s*!=\s*['"](\w+)['"]/);
-          if (neMatch) {
-            query = query.neq(neMatch[1], neMatch[2]);
-          }
-        }
+    // Split conditions by AND/OR
+    const parts = whereClause.split(/\s+(and|or)\s+/i);
+    let paramIndex = 0;
+    
+    for (let i = 0; i < parts.length; i += 2) {
+      const condition = parts[i].trim();
+      
+      // Handle "table.column = ?" pattern (e.g., "users.emailAddress = ?")
+      const tableColMatch = condition.match(/(\w+)\.(\w+)\s*=\s*\?/);
+      if (tableColMatch && paramIndex < params.length) {
+        query = query.eq(tableColMatch[2], params[paramIndex]);
+        paramIndex++;
+        continue;
       }
-    });
+      
+      // Handle "column = ?" pattern
+      const eqMatch = condition.match(/(\w+)\s*=\s*\?/);
+      if (eqMatch && paramIndex < params.length) {
+        query = query.eq(eqMatch[1], params[paramIndex]);
+        paramIndex++;
+        continue;
+      }
+      
+      // Handle "column = value" pattern
+      const eqValueMatch = condition.match(/(\w+)\s*=\s*['"]?([^'"]+)['"]?/);
+      if (eqValueMatch) {
+        query = query.eq(eqValueMatch[1], eqValueMatch[2]);
+        continue;
+      }
+      
+      // Handle "column != value" pattern
+      const neMatch = condition.match(/(\w+)\s*!=\s*['"]?(\w+)['"]?/);
+      if (neMatch) {
+        query = query.neq(neMatch[1], neMatch[2]);
+        continue;
+      }
+      
+      // Handle "column IN (...)"
+      const inMatch = condition.match(/(\w+)\s+IN\s*\(([^)]+)\)/);
+      if (inMatch) {
+        const values = inMatch[2].split(',').map(v => v.trim().replace(/['"]/g, ''));
+        query = query.in(inMatch[1], values);
+        continue;
+      }
+    }
     
     return query;
   }
 
   findParamIndex(sql, clause) {
-    // Simple approach: count ? before this clause
-    const beforeThis = sql.substring(0, sql.indexOf(clause));
-    return (beforeThis.match(/\?/g) || []).length;
+    // Count how many ? placeholders appear before this clause
+    const beforeClause = sql.substring(0, sql.indexOf(clause));
+    return (beforeClause.match(/\?/g) || []).length;
   }
 }
 
