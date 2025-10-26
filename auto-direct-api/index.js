@@ -107,8 +107,8 @@ const corsOptions = {
     }
     
     // For production, allow requests from any Vercel domain
-    console.log('[CORS] Allowing origin:', origin);
-    callback(null, true);
+    console.log('[CORS] Blocking origin:', origin);
+    callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
