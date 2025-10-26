@@ -303,8 +303,9 @@ class SupabaseAdapter {
       // Handle "table.column = ?" pattern (e.g., "users.emailAddress = ?")
       const tableColMatch = condition.match(/(\w+)\.(\w+)\s*=\s*\?/);
       if (tableColMatch && paramIndex < params.length) {
-        console.log('[Supabase Adapter] Using table.column pattern:', tableColMatch[2], '=', params[paramIndex]);
-        query = query.eq(tableColMatch[2], params[paramIndex]);
+        const column = tableColMatch[2].toLowerCase(); // PostgreSQL uses lowercase
+        console.log('[Supabase Adapter] Using table.column pattern:', column, '=', params[paramIndex]);
+        query = query.eq(column, params[paramIndex]);
         paramIndex++;
         continue;
       }
@@ -312,8 +313,9 @@ class SupabaseAdapter {
       // Handle "column = ?" pattern
       const eqMatch = condition.match(/(\w+)\s*=\s*\?/);
       if (eqMatch && paramIndex < params.length) {
-        console.log('[Supabase Adapter] Using column pattern:', eqMatch[1], '=', params[paramIndex]);
-        query = query.eq(eqMatch[1], params[paramIndex]);
+        const column = eqMatch[1].toLowerCase(); // PostgreSQL uses lowercase
+        console.log('[Supabase Adapter] Using column pattern:', column, '=', params[paramIndex]);
+        query = query.eq(column, params[paramIndex]);
         paramIndex++;
         continue;
       }
