@@ -174,19 +174,24 @@ class SupabaseAdapter {
         const imageMap = {};
         if (images) {
           images.forEach(img => {
-            // Convert to match vehicle ID format
             const vid = img.vehicleid;
             if (!imageMap[vid]) {
-              // Add /vehicle-images/ prefix for the image URL
-              imageMap[vid] = '/vehicle-images/' + img.path;
+              // Keep path as is - frontend will handle the URL
+              imageMap[vid] = img.path;
             }
           });
         }
         
         // Add images to vehicles
         data.forEach(v => {
-          v.mainImage = imageMap[v.vehicleID] || null;
-          console.log('[Supabase Adapter] Vehicle', v.vehicleID, 'has image:', v.mainImage);
+          const imgPath = imageMap[v.vehicleID];
+          if (imgPath) {
+            // Return just the filename, frontend adds the prefix
+            v.mainImage = imgPath;
+          } else {
+            v.mainImage = null;
+          }
+          console.log('[Supabase Adapter] Vehicle', v.vehicleID, 'has image path:', v.mainImage);
         });
       }
     }
