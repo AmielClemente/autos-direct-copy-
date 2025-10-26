@@ -9,38 +9,37 @@ const { getUserRolesByID } = require('../service/role-services.js');
 // Get all test drive bookings for admin dashboard
 router.get('/admin-requests', async (req, res) => {
 	try {
-		const mysql = require('mysql2');
-		const { connectionConfig } = require('../config/connectionsConfig.js');
-		const pool = mysql.createPool(connectionConfig);
+		const { getSupabase } = require('../service/db-singleton.js');
+		const supabase = getSupabase();
+		if (!supabase) {
+			return res.status(500).json({ error: 'Database not available' });
+		}
 		
 		// First get all test drive bookings
-		const bookingsQuery = `SELECT bookingID, userID, vehicleID, dealerID, time, status, customerNotes FROM test_drive_bookings ORDER BY time DESC`;
+		const { data: bookings, error: bookingsError } = await supabase
+			.from('test_drive_bookings')
+			.select('bookingID, userID, vehicleID, dealerID, time, status, customerNotes')
+			.order('time', { ascending: false });
 		
-		pool.query(bookingsQuery, async (err, bookings) => {
-			if (err) {
-				console.error('Database error in admin-requests:', err);
-				return res.status(500).json({ error: 'Failed to fetch test drive bookings' });
-			}
-			
-			// Enhance each booking with customer and vehicle info
-			const enhancedBookings = await Promise.all(
-				bookings.map(async (booking) => {
-					let customerName = 'N/A', customerEmail = 'N/A', customerPhone = 'N/A';
-					let vehicleInfo = 'N/A', price = null;
-					
-					// Get customer info
-					if (booking.userID) {
-						try {
-							const userResult = await new Promise((resolve, reject) => {
-								pool.query(
-									'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?',
-									[booking.userID],
-									(err, result) => {
-										if (err) reject(err);
-										else resolve(result);
-									}
-								);
-							});
+		if (bookingsError) {
+			console.error('Database error in admin-requests:', bookingsError);
+			return res.status(500).json({ error: 'Failed to fetch test drive bookings' });
+		}
+		
+		// Enhance each booking with customer and vehicle info
+		const enhancedBookings = await Promise.all(
+			(bookings || []).map(async (booking) => {
+				let customerName = 'N/A', customerEmail = 'N/A', customerPhone = 'N/A';
+				let vehicleInfo = 'N/A', price = null;
+				
+				// Get customer info
+				if (booking.userID) {
+					try {
+						const { data: userResult } = await supabase
+							.from('users')
+							.select('firstName, lastName, emailAddress, phone')
+							.eq('userID', booking.userID)
+							.single();
 							
 							if (userResult && userResult.length > 0) {
 								const user = userResult[0];
