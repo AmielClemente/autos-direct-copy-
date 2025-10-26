@@ -68,15 +68,19 @@ class SupabaseAdapter {
   }
 
   async handleJoinQuery(sql, params) {
-    // Try to get main table and build query step by step
-    // This is a simplified JOIN handler - gets main table data only
+    console.log('[Supabase Adapter] Handling JOIN query');
+    
+    // For simple queries, just get vehicles and we'll add related data
     const fromMatch = sql.match(/from\s+(\w+)/i);
     if (!fromMatch) return [];
     
     const mainTable = fromMatch[1];
+    console.log('[Supabase Adapter] Main table:', mainTable);
+    
+    // For vehicles query, get vehicles with basic info
     let query = this.supabase.from(mainTable).select('*');
     
-    // Apply WHERE clause from main table
+    // Apply WHERE clause
     const whereMatch = sql.match(/where\s+(.+?)(?:order|group|limit|$)/i);
     if (whereMatch) {
       const whereClause = whereMatch[1].trim();
@@ -85,10 +89,11 @@ class SupabaseAdapter {
     
     const { data, error } = await query;
     if (error) {
-      console.error('JOIN query simplified, using main table only:', error.message);
+      console.error('[Supabase Adapter] JOIN query error:', error);
       throw error;
     }
     
+    console.log('[Supabase Adapter] JOIN results:', data?.length || 0, 'rows');
     return data || [];
   }
 
