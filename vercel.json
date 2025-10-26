@@ -81,7 +81,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "/auto-direct-app/:path*"
+      "destination": "/auto-direct-app/index.html"
     }
   ],
   "env": {
