@@ -78,10 +78,6 @@
     {
       "source": "/health",
       "destination": "/auto-direct-api/index.js"
-    },
-    {
-      "source": "/:path(^(?!.*\\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)$).*)",
-      "destination": "/auto-direct-app/index.html"
     }
   ],
   "env": {
