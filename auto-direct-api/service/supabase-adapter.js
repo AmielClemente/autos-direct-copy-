@@ -98,30 +98,43 @@ class SupabaseAdapter {
     
     // For vehicles, we need to add make names manually
     if (mainTable === 'vehicles' && data && data.length > 0) {
-      // PostgreSQL returns lowercase, convert ALL columns to camelCase
+      // PostgreSQL returns lowercase, convert to camelCase like MySQL
       data.forEach(v => {
-        // Convert all lowercase fields to camelCase
-        Object.keys(v).forEach(key => {
-          if (key.includes('_') || key === key.toLowerCase()) {
-            const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-            v[camelKey.charAt(0).toUpperCase() + camelKey.slice(1)] = v[key];
-          }
-        });
+        // Remove lowercase keys after converting
+        const newObj = {};
         
-        // Ensure specific fields
-        v.vehicleID = v.vehicleID || v.vehicleid;
-        v.makeID = v.makeID || v.makeid;
-        v.modelName = v.modelName || v.modelname;
-        v.bodyType = v.bodyType || v.bodytype;
-        v.driveType = v.driveType || v.drivetype;
-        v.approvalStatus = v.approvalStatus || v.approvalstatus;
-        v.deletedStatus = v.deletedStatus || v.deletedstatus;
+        // Create camelCase mappings
+        newObj.vehicleID = v.vehicleid;
+        newObj.makeID = v.makeid;
+        newObj.modelName = v.modelname;
+        newObj.bodyType = v.bodytype;
+        newObj.fuel = v.fuel;
+        newObj.driveType = v.drivetype;
+        newObj.cylinders = v.cylinders;
+        newObj.doors = v.doors;
+        newObj.description = v.description;
+        newObj.price = v.price;
+        newObj.colour = v.colour;
+        newObj.transmission = v.transmission;
+        newObj.approvalStatus = v.approvalstatus;
+        newObj.deletedStatus = v.deletedstatus;
         
-        // Debug log
-        console.log('[Supabase Adapter] Vehicle after conversion:', {
+        // Copy all properties to original object
+        Object.assign(v, newObj);
+        
+        // Remove lowercase duplicates
+        delete v.vehicleid;
+        delete v.makeid;
+        delete v.modelname;
+        delete v.bodytype;
+        delete v.drivetype;
+        delete v.approvalstatus;
+        delete v.deletedstatus;
+        
+        console.log('[Supabase Adapter] Vehicle converted:', {
           vehicleID: v.vehicleID,
           modelName: v.modelName,
-          hasMakeName: !!v.makeName
+          makeID: v.makeID
         });
       });
       
