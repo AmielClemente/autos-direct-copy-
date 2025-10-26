@@ -80,8 +80,9 @@
       "destination": "/auto-direct-api/index.js"
     },
     {
-      "source": "/((?!assets).*)",
-      "destination": "/auto-direct-app/index.html"
+      "source": "/(.*)",
+      "destination": "/auto-direct-app/:1",
+      "missing": "/auto-direct-app/index.html"
     }
   ],
   "env": {
