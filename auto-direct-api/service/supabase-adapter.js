@@ -100,20 +100,27 @@ class SupabaseAdapter {
     if (mainTable === 'vehicles' && data && data.length > 0) {
       // PostgreSQL returns lowercase, convert ALL columns to camelCase
       data.forEach(v => {
-        v.vehicleID = v.vehicleid;
-        v.makeID = v.makeid;
-        v.modelName = v.modelname;
-        v.bodyType = v.bodytype;
-        v.fuel = v.fuel;
-        v.driveType = v.drivetype;
-        v.cylinders = v.cylinders;
-        v.doors = v.doors;
-        v.description = v.description;
-        v.price = v.price;
-        v.colour = v.colour;
-        v.transmission = v.transmission;
-        v.approvalStatus = v.approvalstatus;
-        v.deletedStatus = v.deletedstatus;
+        if (v.vehicleid) v.vehicleID = v.vehicleid;
+        if (v.makeid) v.makeID = v.makeid;
+        if (v.modelname) v.modelName = v.modelname;
+        if (v.bodytype) v.bodyType = v.bodytype;
+        v.fuel = v.fuel || v.fuel; // Keep as is
+        if (v.drivetype) v.driveType = v.drivetype;
+        v.cylinders = v.cylinders || v.cylinders;
+        v.doors = v.doors || v.doors;
+        v.description = v.description || v.description;
+        v.price = v.price || v.price;
+        v.colour = v.colour || v.colour;
+        v.transmission = v.transmission || v.transmission;
+        if (v.approvalstatus) v.approvalStatus = v.approvalstatus;
+        if (v.deletedstatus) v.deletedStatus = v.deletedstatus;
+        
+        // Debug log
+        console.log('[Supabase Adapter] Vehicle converted:', {
+          vehicleID: v.vehicleID,
+          modelName: v.modelName,
+          makeID: v.makeID
+        });
       });
       
       // Get make IDs
