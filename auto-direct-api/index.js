@@ -28,11 +28,16 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client for production
 let supabase;
-if (process.env.NODE_ENV === 'production' && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
-  supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
-  console.log('Supabase client initialized for production');
-} else {
-  console.log('Supabase not configured, using MySQL for development');
+try {
+  if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
+    supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
+    console.log('Supabase client initialized for production');
+  } else {
+    console.log('Supabase not configured, using MySQL for development');
+  }
+} catch (error) {
+  console.error('Error initializing Supabase:', error.message);
+  console.log('Running without Supabase, using MySQL for development');
 }
 
 // Create a simple connection pool with error handling for MySQL (development)
