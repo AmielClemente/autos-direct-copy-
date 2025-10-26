@@ -25,8 +25,8 @@ const getMakeID = async (makeName, dbClient = null) => {
 
 const getAllMakes = async (dbClient = null, supabaseClient = null) => {
 	try {
-		// If we have Supabase in production, use it
-		if (supabaseClient && process.env.NODE_ENV === 'production') {
+		// Always use Supabase
+		if (supabaseClient) {
 			const { data, error } = await supabaseClient
 				.from('makes')
 				.select('*');
@@ -38,45 +38,24 @@ const getAllMakes = async (dbClient = null, supabaseClient = null) => {
 			return data || [];
 		}
 
-		// Otherwise use MySQL (development)
-		if (!dbClient) {
-			// Fallback to singleton pool only in development
-			const { getPool } = require('./db-singleton.js');
-			const pool = getPool();
-			const db = pool;
+		// Fallback: try to get Supabase from singleton
+		const { getSupabase } = require('./db-singleton.js');
+		const supabase = getSupabase();
+		
+		if (supabase) {
+			const { data, error } = await supabase
+				.from('makes')
+				.select('*');
 			
-			if (!db) {
-				console.error('getAllMakes: No database pool available');
+			if (error) {
+				console.error('Error in getAllMakes from Supabase:', error);
 				return [];
 			}
-			
-			const query = `SELECT * FROM makes`
-			return new Promise((resolve, reject) => {
-				db.query(query,
-				(err, result) => {
-					if (err) {
-						console.error('Error in getAllMakes:', err);
-						resolve([]); // Return empty array instead of rejecting
-					} else {
-						resolve(result);
-					}
-				});
-			});
-		} else {
-			// Use the provided dbClient
-			const query = `SELECT * FROM makes`
-			return new Promise((resolve, reject) => {
-				dbClient.query(query,
-				(err, result) => {
-					if (err) {
-						console.error('Error in getAllMakes:', err);
-						resolve([]); // Return empty array instead of rejecting
-					} else {
-						resolve(result);
-					}
-				});
-			});
+			return data || [];
 		}
+		
+		console.error('getAllMakes: No Supabase client available');
+		return [];
 	} catch (err) {
 		console.error('Error in getAllMakes catch:', err);
 		return []; // Return empty array instead of throwing
