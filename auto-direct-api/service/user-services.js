@@ -1,6 +1,21 @@
 const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
-const pool = mysql.createPool(connectionConfig);
+
+let pool;
+try {
+  pool = mysql.createPool(connectionConfig);
+  // Test connection
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('user-services: Database connection failed:', err.message);
+    } else {
+      console.log('user-services: Database connected successfully');
+      connection.release();
+    }
+  });
+} catch (error) {
+  console.error('user-services: Failed to initialize database pool:', error.message);
+}
 
 const createUser = async (userNewID, user ) => {
 	try {
