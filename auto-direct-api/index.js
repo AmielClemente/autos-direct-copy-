@@ -38,6 +38,11 @@ try {
   });
   
   if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
+    console.log('Creating Supabase client with:', {
+      url: supabaseConfig.url.substring(0, 30) + '...',
+      hasKey: !!supabaseConfig.serviceRoleKey,
+      keyPreview: supabaseConfig.serviceRoleKey?.substring(0, 20) + '...'
+    });
     supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
     console.log('Supabase client initialized for production');
   } else {
