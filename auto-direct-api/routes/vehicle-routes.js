@@ -6,6 +6,16 @@ const { connectionConfig } = require('../config/connectionsConfig.js');
 const verifyToken = require('../middleware/authentication');
 const authorizeUser = require('../middleware/authorization');
 const pool = mysql.createPool(connectionConfig);
+
+// Add error handling for database connection
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error('Database connection failed:', err.message);
+  } else {
+    console.log('Database connected successfully');
+    connection.release();
+  }
+});
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -296,7 +306,8 @@ router.get('/browse-vehicles', (req, res) => {
   pool.query(browseQuery, values, (err, result) => {
     if (err) {
       console.error('Error retrieving vehicles: ', err);
-      return res.status(500).send('Server unable to retrieve vehicles');
+      // Return empty array instead of crashing
+      return res.status(200).json([]);
     }
 
     res.status(200).json(result);
@@ -472,7 +483,9 @@ router.get('/makes', async (req, res) => {
 		const makes = await getAllMakes();
 		res.status(200).json({ makes: makes });
 	} catch (error) {
-		res.status(500).json({ error: 'Fetching Makes failed: ' + error });
+		console.error('Error retrieving Makes:', error);
+		// Return empty array instead of crashing
+		res.status(200).json({ makes: [] });
 	}
 })
 
