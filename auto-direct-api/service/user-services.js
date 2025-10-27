@@ -64,13 +64,11 @@ const getAllUsers = (dbClient = null) => {
 }
 
 const getUserByEmail = (emailAddress, dbClient = null) => {
-	// Use the fallback pool from db-singleton only in development
-	const { getPool } = require('./db-singleton.js');
-	const pool = getPool();
-	const db = dbClient || pool;
+	// Use the passed dbClient (SupabaseAdapter in production)
+	const db = dbClient;
 	
 	if (!db) {
-		console.error('getUserByEmail: Database pool not initialized');
+		console.error('getUserByEmail: Database client not provided');
 		return Promise.resolve([]);
 	}
 	
@@ -94,10 +92,13 @@ const getUserByEmail = (emailAddress, dbClient = null) => {
 };
 
 const getUserInfoByID = async (userID, dbClient = null) => {
-	// Use the fallback pool from db-singleton only in development
-	const { getPool } = require('./db-singleton.js');
-	const pool = getPool();
-	const db = dbClient || pool;
+	// Use the passed dbClient (SupabaseAdapter in production)
+	const db = dbClient;
+	
+	if (!db) {
+		console.error('getUserInfoByID: Database client not provided');
+		return Promise.resolve(null);
+	}
 	
 	try {
 		const query = `SELECT firstName, lastName, emailAddress, phone, createdTime, streetNo, streetName, suburb, postcode, user_status FROM users WHERE users.userID = ?`;
@@ -115,10 +116,13 @@ const getUserInfoByID = async (userID, dbClient = null) => {
 }
 
 const getUserByID = async (userID, dbClient = null) => {
-	// Use the fallback pool from db-singleton only in development
-	const { getPool } = require('./db-singleton.js');
-	const pool = getPool();
-	const db = dbClient || pool;
+	// Use the passed dbClient (SupabaseAdapter in production)
+	const db = dbClient;
+	
+	if (!db) {
+		console.error('getUserByID: Database client not provided');
+		return Promise.resolve(null);
+	}
 	
 	try {
 		const query = `SELECT * FROM users WHERE users.userID = ?`;
