@@ -88,20 +88,53 @@ const getUserRolesByID = async (userID, dbClient = null) => {
 	}
 	
 	try {
-		const query = `SELECT * FROM user_roles JOIN roles ON user_roles.roleID = roles.roleID WHERE user_roles.userID = ?;`
-		console.log('[getUserRolesByID] Query:', query);
+		// Get user role assignments first
+		const userRolesQuery = `SELECT roleID FROM user_roles WHERE userID = ?;`
+		console.log('[getUserRolesByID] Query:', userRolesQuery);
 		console.log('[getUserRolesByID] userID:', userID);
+		
 		return new Promise((resolve, reject) => {
-			db.query(query, [userID],
-			(err, result) => {
-				if (err) {
-					console.error('[getUserRolesByID] Query error:', err);
-					reject(err);
-				} else {
-					console.log('[getUserRolesByID] Result:', JSON.stringify(result, null, 2));
-					resolve(result);
+			db.query(userRolesQuery, [userID],
+				(err, userRolesResult) => {
+					if (err) {
+						console.error('[getUserRolesByID] Query error:', err);
+						reject(err);
+					} else {
+						console.log('[getUserRolesByID] User roles result:', JSON.stringify(userRolesResult, null, 2));
+						
+						if (!userRolesResult || userRolesResult.length === 0) {
+							resolve([]);
+							return;
+						}
+						
+						// Extract roleIDs
+						const roleIDs = userRolesResult.map(row => row.roleID || row.roleid);
+						console.log('[getUserRolesByID] roleIDs:', roleIDs);
+						
+						if (roleIDs.length === 0) {
+							resolve([]);
+							return;
+						}
+						
+						// Query roles table to get labels
+						const placeholders = roleIDs.map(() => '?').join(',');
+						const rolesQuery = `SELECT roleID, label FROM roles WHERE roleID IN (${placeholders});`;
+						console.log('[getUserRolesByID] Roles query:', rolesQuery);
+						
+						db.query(rolesQuery, roleIDs,
+							(err2, rolesResult) => {
+								if (err2) {
+									console.error('[getUserRolesByID] Roles query error:', err2);
+									reject(err2);
+								} else {
+									console.log('[getUserRolesByID] Final result:', JSON.stringify(rolesResult, null, 2));
+									resolve(rolesResult || []);
+								}
+							}
+						);
+					}
 				}
-			});
+			);
 		})
 	} catch (err) {
 		throw 'getUserRolesByID error: ' + err;
