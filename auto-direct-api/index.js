@@ -33,71 +33,72 @@ try {
 const app = express();
 const server = http.createServer(app);
 let io;
-const connectDB = require("./service/databaseConnection");
+let connectDB;
+try {
+  connectDB = require("./service/databaseConnection");
+} catch (e) {
+  console.log('Could not load databaseConnection:', e.message);
+  connectDB = () => console.log('DatabaseConnection not available');
+}
 const PORT = process.env.PORT || 3000;
 
-const mysql = require('mysql2')
-const { connectionConfig, supabaseConfig } = require('./config/supabaseConfig');
-const { createClient } = require('@supabase/supabase-js');
-const { SupabaseAdapter } = require('./service/supabase-adapter');
+// Import with error handling
+let mysql, connectionConfig, supabaseConfig, createClient, SupabaseAdapter;
+try {
+  mysql = require('mysql2');
+  const config = require('./config/supabaseConfig');
+  connectionConfig = config.connectionConfig;
+  supabaseConfig = config.supabaseConfig;
+  createClient = require('@supabase/supabase-js').createClient;
+  SupabaseAdapter = require('./service/supabase-adapter').SupabaseAdapter;
+} catch (e) {
+  console.error('Error loading dependencies:', e.message);
+  mysql = null;
+  connectionConfig = null;
+  supabaseConfig = null;
+}
 
 // Initialize Supabase client for production
 let supabase;
 try {
-  console.log('Environment check:', {
+  console.log('[INIT] Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
-    SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'NOT SET',
-    SUPABASE_URL_VALUE: process.env.SUPABASE_URL?.substring(0, 30) + '...' || 'NOT SET',
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET (LENGTH: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'NOT SET',
-    supabaseConfig_url: supabaseConfig.url ? 'SET' : 'NOT SET',
-    supabaseConfig_serviceRoleKey: supabaseConfig.serviceRoleKey ? 'SET (LENGTH: ' + supabaseConfig.serviceRoleKey.length + ')' : 'NOT SET'
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
   });
   
-  if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey) {
-    console.log('Creating Supabase client with:', {
-      url: supabaseConfig.url.substring(0, 30) + '...',
-      hasKey: !!supabaseConfig.serviceRoleKey,
-      keyPreview: supabaseConfig.serviceRoleKey?.substring(0, 20) + '...'
-    });
+  if (process.env.NODE_ENV === 'production' && supabaseConfig && supabaseConfig.url && supabaseConfig.serviceRoleKey && createClient) {
+    console.log('[INIT] Creating Supabase client');
     supabase = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
-    console.log('Supabase client initialized for production');
+    console.log('[INIT] Supabase client initialized');
   } else {
-    console.log('Supabase not configured, using MySQL for development');
-    console.log('Reason:', {
-      isProduction: process.env.NODE_ENV === 'production',
-      hasConfig: !!supabaseConfig,
-      hasUrl: !!supabaseConfig?.url,
-      hasServiceRoleKey: !!supabaseConfig?.serviceRoleKey
-    });
+    console.log('[INIT] Supabase not configured');
   }
 } catch (error) {
-  console.error('Error initializing Supabase:', error.message);
-  console.log('Running without Supabase, using MySQL for development');
+  console.error('[INIT] Error initializing Supabase:', error.message);
 }
 
 // Create a simple connection pool with error handling for MySQL (development only)
 let pool;
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && mysql && connectionConfig) {
   try {
-    // Try to create the connection pool
+    console.log('[INIT] Creating MySQL pool');
     pool = mysql.createPool(connectionConfig);
     
     // Test the connection
     pool.getConnection((err, connection) => {
       if (err) {
-        console.error('Database connection failed:', err.message);
-        console.log('Running without database connection...');
+        console.error('[INIT] Database connection failed:', err.message);
       } else {
-        console.log('Database connected successfully');
+        console.log('[INIT] Database connected successfully');
         connection.release();
       }
     });
   } catch (error) {
-    console.error('Failed to initialize database pool:', error.message);
-    console.log('Running without database connection...');
+    console.error('[INIT] Failed to initialize database pool:', error.message);
   }
 } else {
-  console.log('Production mode: Skipping MySQL pool creation');
+  console.log('[INIT] Skipping MySQL pool creation');
 }
 
 // CORS configuration to allow requests from Vercel frontend
@@ -155,27 +156,32 @@ app.use((req, res, next) => {
   console.log('[Middleware] Environment:', process.env.NODE_ENV);
   
   // In production with Supabase, use SupabaseAdapter to make Supabase work like MySQL pool
-  if (supabase && process.env.NODE_ENV === 'production') {
+  if (supabase && process.env.NODE_ENV === 'production' && SupabaseAdapter) {
     console.log('[Middleware] Using Supabase adapter for production');
-    const adapter = new SupabaseAdapter(supabase);
-    req.pool = {
-      query: (sql, params, callback) => {
-        console.log('[Middleware] Query called with SQL:', sql.substring(0, 100));
-        const result = adapter.query(sql, params);
-        if (callback) {
-          result
-            .then(data => {
-              console.log('[Middleware] Query returned', data?.length || 0, 'rows');
-              callback(null, data);
-            })
-            .catch(err => {
-              console.error('[Middleware] Query error:', err);
-              callback(err);
-            });
+    try {
+      const adapter = new SupabaseAdapter(supabase);
+      req.pool = {
+        query: (sql, params, callback) => {
+          console.log('[Middleware] Query called with SQL:', sql.substring(0, 100));
+          const result = adapter.query(sql, params);
+          if (callback) {
+            result
+              .then(data => {
+                console.log('[Middleware] Query returned', data?.length || 0, 'rows');
+                callback(null, data);
+              })
+              .catch(err => {
+                console.error('[Middleware] Query error:', err);
+                callback(err);
+              });
+          }
+          return result;
         }
-        return result;
-      }
-    };
+      };
+    } catch (error) {
+      console.error('[Middleware] Failed to create SupabaseAdapter:', error);
+      req.pool = null;
+    }
   } else {
     console.log('[Middleware] Using MySQL pool for development');
     req.pool = pool;
