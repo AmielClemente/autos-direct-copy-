@@ -190,7 +190,12 @@ app.use("/finance-requests", financeRequestsRoutes);
 app.use("/vehicle-comparison", vehicleComparisonRoutes);
 app.use("/api/complaints", complaintsRoutes);
 
-connectDB();
+// Only connect to MySQL in development
+if (process.env.NODE_ENV !== 'production') {
+  connectDB();
+} else {
+  console.log('Production mode: Skipping MySQL connection');
+}
 
 // Setup Socket.IO for real-time chatbot replies
 try {
@@ -262,5 +267,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export app for Vercel serverless functions
-module.exports = app;
+// Export app for Vercel serverless functions with error handling
+try {
+  console.log('Exporting Express app for Vercel serverless functions');
+  module.exports = app;
+} catch (error) {
+  console.error('FATAL ERROR in module initialization:', error);
+  // Export a minimal app that returns errors as JSON
+  const errorApp = express();
+  errorApp.use(cors());
+  errorApp.use(express.json());
+  errorApp.use((req, res) => {
+    res.status(500).json({ 
+      error: 'Server initialization failed', 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
+  });
+  module.exports = errorApp;
+}
