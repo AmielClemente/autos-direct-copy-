@@ -87,12 +87,11 @@ router.post('/login', async (req, res) => {
 		}
 
 		let user = rows[0];
+		console.log('[LOGIN] User object:', JSON.stringify(user));
 		console.log('[LOGIN] User object keys:', Object.keys(user));
-		console.log('[LOGIN] Has passwordHash?', 'passwordHash' in user);
-		console.log('[LOGIN] Has passwordhash?', 'passwordhash' in user);
 		
 		// Try both passwordHash and passwordhash (PostgreSQL case sensitivity)
-		const userPasswordHash = user.passwordHash || user.passwordhash;
+		const userPasswordHash = user.passwordHash || user.passwordhash || user.PasswordHash;
 		
 		if (!userPasswordHash) {
 			console.error('[LOGIN] No passwordHash found in user object');
