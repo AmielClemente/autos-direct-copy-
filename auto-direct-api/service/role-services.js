@@ -89,13 +89,19 @@ const getUserRolesByID = async (userID, dbClient = null) => {
 	
 	try {
 		const query = `SELECT * FROM user_roles JOIN roles ON user_roles.roleID = roles.roleID WHERE user_roles.userID = ?;`
+		console.log('[getUserRolesByID] Query:', query);
+		console.log('[getUserRolesByID] userID:', userID);
 		return new Promise((resolve, reject) => {
 			db.query(query, [userID],
 			(err, result) => {
-				if (err) reject(err);
-				resolve(result);
+				if (err) {
+					console.error('[getUserRolesByID] Query error:', err);
+					reject(err);
+				} else {
+					console.log('[getUserRolesByID] Result:', JSON.stringify(result, null, 2));
+					resolve(result);
 				}
-			);
+			});
 		})
 	} catch (err) {
 		throw 'getUserRolesByID error: ' + err;
