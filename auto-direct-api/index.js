@@ -221,19 +221,21 @@ app.get('/api/test', (req, res) => {
 });
 
 // Only use routes if they were loaded successfully
-if (userRoutes) app.use('/user', userRoutes);
-if (vehicleRoutes) app.use('/vehicle', vehicleRoutes);
-if (manufacturerRoutes) app.use('/manufacturer', manufacturerRoutes);
-if (dealerRoutes) app.use("/manage-dealerships", dealerRoutes);
-if (testDriveBookingRoutes) app.use("/test-drive", testDriveBookingRoutes);
-if (purchasesRoute) app.use("/purchases", purchasesRoute);
-if (orderProcessingRoutes) app.use("/order-processing", orderProcessingRoutes);
-if (financeRoutes) app.use("/finance", financeRoutes);
-if (financeRequestsRoutes) app.use("/finance-requests", financeRequestsRoutes);
-if (vehicleComparisonRoutes) app.use("/vehicle-comparison", vehicleComparisonRoutes);
-if (complaintsRoutes) app.use("/api/complaints", complaintsRoutes);
-if (chatbotRoutes) app.use('/api/chatbot', chatbotRoutes);
-if (adminRoutes) app.use('/admin', adminRoutes);
+console.log('[ROUTES] Registering routes...');
+if (userRoutes) { app.use('/user', userRoutes); console.log('[ROUTES] ✓ user'); }
+if (vehicleRoutes) { app.use('/vehicle', vehicleRoutes); console.log('[ROUTES] ✓ vehicle'); }
+if (manufacturerRoutes) { app.use('/manufacturer', manufacturerRoutes); console.log('[ROUTES] ✓ manufacturer'); }
+if (dealerRoutes) { app.use("/manage-dealerships", dealerRoutes); console.log('[ROUTES] ✓ manage-dealerships'); }
+if (testDriveBookingRoutes) { app.use("/test-drive", testDriveBookingRoutes); console.log('[ROUTES] ✓ test-drive'); }
+if (purchasesRoute) { app.use("/purchases", purchasesRoute); console.log('[ROUTES] ✓ purchases'); }
+if (orderProcessingRoutes) { app.use("/order-processing", orderProcessingRoutes); console.log('[ROUTES] ✓ order-processing'); }
+if (financeRoutes) { app.use("/finance", financeRoutes); console.log('[ROUTES] ✓ finance'); }
+if (financeRequestsRoutes) { app.use("/finance-requests", financeRequestsRoutes); console.log('[ROUTES] ✓ finance-requests'); }
+if (vehicleComparisonRoutes) { app.use("/vehicle-comparison", vehicleComparisonRoutes); console.log('[ROUTES] ✓ vehicle-comparison'); }
+if (complaintsRoutes) { app.use("/api/complaints", complaintsRoutes); console.log('[ROUTES] ✓ complaints'); }
+if (chatbotRoutes) { app.use('/api/chatbot', chatbotRoutes); console.log('[ROUTES] ✓ chatbot'); }
+if (adminRoutes) { app.use('/admin', adminRoutes); console.log('[ROUTES] ✓ admin'); }
+console.log('[ROUTES] All routes registered');
 
 // Static files with error handling
 try {
