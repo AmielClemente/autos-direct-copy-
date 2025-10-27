@@ -190,12 +190,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Simple test endpoint - should ALWAYS work
+app.get('/test', (req, res) => {
+  res.json({ message: 'API is working!', time: new Date().toISOString() });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(), 
-    database: supabase ? 'Supabase Connected' : (pool ? 'MySQL Connected' : 'Not Available'),
+    supabase: !!supabase,
+    pool: !!pool,
     environment: process.env.NODE_ENV || 'development'
   });
 });
