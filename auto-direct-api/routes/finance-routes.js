@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const connection = require('../service/databaseConnection');
 
 // Get finance dashboard data
 router.get('/dashboard-data', async (req, res) => {
