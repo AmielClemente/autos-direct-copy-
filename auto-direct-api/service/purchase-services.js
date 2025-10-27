@@ -1,6 +1,15 @@
 const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
-const pool = mysql.createPool(connectionConfig);
+
+// Only create MySQL pool in development
+let pool = null;
+if (process.env.NODE_ENV !== 'production') {
+	try {
+		pool = mysql.createPool(connectionConfig);
+	} catch (err) {
+		console.log('MySQL pool creation skipped in production');
+	}
+}
 
 const createPurchase = async ( purchaseNewID, userID, vehicleID, notes ) => {
 	try {
