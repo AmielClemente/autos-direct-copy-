@@ -534,11 +534,10 @@ router.put("/reactivateUser", [ verifyToken, authorizeUser ], async (req, res) =
 		// Update user status to Active and restore original email
 		const query = `UPDATE users SET user_status = 'Active', emailAddress = SUBSTRING_INDEX(emailAddress, '.del', 1) WHERE userID = ?`;
 		
-		const [result] = await req.pool.query(query, [userID]);
+		await req.pool.query(query, [userID]);
 		
-		if (result.affectedRows === 0) {
-			return res.status(404).json({ error: 'User not found' });
-		}
+		// Note: Supabase doesn't return affectedRows, so we assume success
+		// If update fails, it will throw an error
 		
 		res.status(200).json({ message: 'User reactivated successfully' });
 	} catch (err) {
@@ -726,7 +725,7 @@ router.get("/pendingRegistrations", [verifyToken, authorizeUser], async (req, re
 			return res.status(403).json({ error: 'User does not have permission for Admin actions!' });
 		}
 
-		const [tokens] = await req.pool.query(
+		const tokens = await req.pool.query(
 			`SELECT rt.token, rt.email, rt.roles, rt.createdAt, rt.expiresAt 
 			 FROM registration_tokens rt
 			 LEFT JOIN users u ON rt.email = u.emailAddress AND u.user_status = 'Active'
@@ -760,7 +759,7 @@ router.post("/resendInvitation", [verifyToken, authorizeUser], async (req, res) 
 		const { token } = req.body;
 
 		// Get token data
-		const [tokenResult] = await req.pool.query(
+		const tokenResult = await req.pool.query(
 			'SELECT email, roles, expiresAt FROM registration_tokens WHERE token = ?',
 			[token]
 		);

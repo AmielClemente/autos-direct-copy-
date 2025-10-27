@@ -577,7 +577,7 @@ router.get('/saved-vehicles/', [ verifyToken, authorizeUser ], async (req, res) 
         const savedVehiclesQuery = `SELECT sv.vehicleID, sv.savedAt FROM saved_vehicle sv
             WHERE sv.userID = ? ORDER BY sv.savedAt DESC;`;
 
-        const [savedVehicles] = await req.pool.query(savedVehiclesQuery, [userID]);
+        const savedVehicles = await req.pool.query(savedVehiclesQuery, [userID]);
 
         if (savedVehicles.length === 0) {
             return res.status(200).json([]);
@@ -599,7 +599,7 @@ router.get('/saved-vehicles/', [ verifyToken, authorizeUser ], async (req, res) 
             ORDER BY CASE ${vehicleIDs.map((id, index) => `WHEN v.vehicleID = ? THEN ${index}`).join(' ')} END
         `;
 
-        const [savedVehicleDetails] = await req.pool.query(vehicleDetailsQuery, [...vehicleIDs, ...vehicleIDs]);
+        const savedVehicleDetails = await req.pool.query(vehicleDetailsQuery, [...vehicleIDs, ...vehicleIDs]);
 
         res.status(200).json(savedVehicleDetails);
 
