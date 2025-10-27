@@ -108,7 +108,7 @@ router.get('/admin-requests', async (req, res) => {
                     if (request.userID) {
                         try {
                             const userResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?',
                                     [request.userID],
                                     (err, result) => {
@@ -133,7 +133,7 @@ router.get('/admin-requests', async (req, res) => {
                     if (request.vehicleID) {
                         try {
                             const vehicleResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     `SELECT v.modelName, v.price, v.colour, v.fuel, m.makeName 
                                      FROM vehicles v 
                                      LEFT JOIN makes ma ON v.makeID = ma.makeID 
@@ -162,7 +162,7 @@ router.get('/admin-requests', async (req, res) => {
                     if (request.dealerID) {
                         try {
                             const dealerResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     'SELECT dealerName FROM dealers WHERE dealerID = ?',
                                     [request.dealerID],
                                     (err, result) => {

@@ -203,7 +203,7 @@ router.post('/add', async (req, res) => {
                 geocodeResult.longitude
             ];
 
-            pool.query(insertQuery, insertValues, (err, result) => {
+            req.pool.query(insertQuery, insertValues, (err, result) => {
                 if (err) {
                     console.error('SQL Insert Error:', err.sqlMessage || err.message);
                     console.error('Full error object:', err);
@@ -272,7 +272,7 @@ router.put('/update/:id', async (req, res) => {
             WHERE dealerID = ?
         `;
 
-        pool.query(updateQuery, [
+        req.pool.query(updateQuery, [
             name,
             streetNo || null,
             streetName || null,

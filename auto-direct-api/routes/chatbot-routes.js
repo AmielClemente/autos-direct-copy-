@@ -308,7 +308,7 @@ router.get('/inquiries', async (req, res) => {
       ORDER BY ci.created_at DESC
     `;
     
-    pool.query(query, (err, results) => {
+                    req.pool.query(query, (err, results) => {
       if (err) {
         console.error('Error fetching inquiries:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -354,7 +354,7 @@ router.get('/my-inquiries', async (req, res) => {
       ORDER BY ci.created_at DESC
     `;
     
-    pool.query(query, [customerKey], (err, results) => {
+                    req.pool.query(query, [customerKey], (err, results) => {
       if (err) {
         console.error('Error fetching customer inquiries:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -388,7 +388,7 @@ router.get('/messages/:inquiryId', async (req, res) => {
       ORDER BY cm.created_at ASC
     `;
     
-    pool.query(query, [inquiryId], (err, results) => {
+                    req.pool.query(query, [inquiryId], (err, results) => {
       if (err) {
         console.error('Error fetching messages:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -421,7 +421,7 @@ router.post('/reply', async (req, res) => {
       VALUES (?, 'agent', ?, NOW())
     `;
     
-    pool.query(insertMessageQuery, [inquiryId, replyText], (err, result) => {
+                    req.pool.query(insertMessageQuery, [inquiryId, replyText], (err, result) => {
       if (err) {
         console.error('Error inserting agent reply:', err);
         return res.status(500).json({ error: 'Failed to send reply' });
@@ -434,7 +434,7 @@ router.post('/reply', async (req, res) => {
         WHERE id = ?
       `;
       
-      pool.query(updateInquiryQuery, [inquiryId], (err) => {
+                    req.pool.query(updateInquiryQuery, [inquiryId], (err) => {
         if (err) {
           console.error('Error updating inquiry status:', err);
         }
@@ -488,7 +488,7 @@ router.put('/assign', async (req, res) => {
       WHERE id = ?
     `;
     
-    pool.query(query, [agent, inquiryId], (err, result) => {
+                    req.pool.query(query, [agent, inquiryId], (err, result) => {
       if (err) {
         console.error('Error assigning inquiry:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -522,7 +522,7 @@ router.put('/unassign', async (req, res) => {
       WHERE id = ?
     `;
     
-    pool.query(query, [inquiryId], (err, result) => {
+                    req.pool.query(query, [inquiryId], (err, result) => {
       if (err) {
         console.error('Error unassigning inquiry:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -561,7 +561,7 @@ router.put('/status', async (req, res) => {
       WHERE id = ?
     `;
     
-    pool.query(query, [status, inquiryId], (err, result) => {
+                    req.pool.query(query, [status, inquiryId], (err, result) => {
       if (err) {
         console.error('Error updating status:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -599,7 +599,7 @@ router.post('/after-hours-inquiry', async (req, res) => {
       VALUES (?, ?, ?, 'after_hours', NOW(), 'low')
     `;
     
-    pool.query(createInquiryQuery, [
+                    req.pool.query(createInquiryQuery, [
       `After-hours inquiry: ${message}`,
       customerEmail,
       customerPhone
@@ -664,7 +664,7 @@ router.delete('/messages/:messageId', async (req, res) => {
     
     console.log('Executing delete query:', query, 'with ID:', messageId);
     
-    pool.query(query, [messageId], (err, result) => {
+                    req.pool.query(query, [messageId], (err, result) => {
       if (err) {
         console.error('Error deleting message:', err);
         return res.status(500).json({ error: 'Database error' });
@@ -707,7 +707,7 @@ router.delete('/inquiries/:inquiryId', async (req, res) => {
     
     console.log('Executing delete inquiry query:', query, 'with ID:', inquiryId);
     
-    pool.query(query, [inquiryId], (err, result) => {
+                    req.pool.query(query, [inquiryId], (err, result) => {
       if (err) {
         console.error('Error deleting inquiry:', err);
         return res.status(500).json({ error: 'Database error' });

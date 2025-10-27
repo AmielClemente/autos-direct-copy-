@@ -86,7 +86,7 @@ router.get('/advice-requests/employees', (req, res) => {
     JOIN user_roles AS ur ON u.userID = ur.userID
     WHERE ur.roleID = 'f717e308-64de-4a7a-a050-892221e982bf'`;
 
-    pool.query(allEmployeesQuery, (err, result) => {
+    req.pool.query(allEmployeesQuery, (err, result) => {
         if (err) {
             console.error('Error retrieving employees:', err);
             return res.status(500).send('Server unable to retrieve employees');
@@ -129,7 +129,7 @@ router.get('/advice-requests/unassigned', (req, res) => {
 
     unassignedRequestsQuery += ';'; // Janky but need to do this in case we've got the extra details
 
-    pool.query(unassignedRequestsQuery, queryParams, (err, result) => {
+    req.pool.query(unassignedRequestsQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error retrieving unassigned advice requests: ', err);
             return res.status(500).send('Server unable to retrieve unassigned advice requests');
@@ -171,7 +171,7 @@ router.get('/advice-requests/in-progress', (req, res) => {
     }
     inProgressRequestsQuery += ';'; // Janky but need to do this in case we've got the extra details
 
-    pool.query(inProgressRequestsQuery, queryParams, (err, result) => {
+    req.pool.query(inProgressRequestsQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error retrieving in-progress advice requests: ', err);
             return res.status(500).send('Server unable to retrieve in-progress advice requests');
@@ -213,7 +213,7 @@ router.get('/advice-requests/completed', (req, res) => {
     }
     completedRequestsQuery += ';'; // Janky but need to do this in case we've got the extra details
 
-    pool.query(completedRequestsQuery, queryParams, (err, result) => {
+    req.pool.query(completedRequestsQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error retrieving completed advice requests: ', err);
             return res.status(500).send('Server unable to retrieve completed advice requests');
@@ -234,7 +234,7 @@ router.post('/advice-requests/assign/', [ verifyToken, authorizeUser ], async (r
     const pickUpQuery = `UPDATE advice_requests SET employeeID = ?, status = 
     'In Progress' WHERE requestID = ?`;
     
-    pool.query(pickUpQuery, [employeeID, requestID], (err, result) => {
+    req.pool.query(pickUpQuery, [employeeID, requestID], (err, result) => {
         if (err) {
             console.error('Error picking up advice request: ', err);
             return res.status(500).send('Server unable to allocate advice request');
@@ -253,7 +253,7 @@ router.get('/advice-requests/:id', (req, res) => {
 
     const getRequestQuery = `SELECT * FROM advice_requests WHERE requestID = ?`;
 
-    pool.query(getRequestQuery, [id], (err, result) => {
+    req.pool.query(getRequestQuery, [id], (err, result) => {
         if (err) {
             console.error('Error retrieving advice request: ', err);
             return res.status(500).send('Server unable to retrieve advice request');
@@ -298,7 +298,7 @@ router.get('/my-requests/in-progress', (req, res) => {
     }
     inProgressRequestsQuery += ';'; // Janky but need to do this in case we've got the extra details
 
-    pool.query(inProgressRequestsQuery, queryParams, (err, result) => {
+    req.pool.query(inProgressRequestsQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error retrieving in-progress advice requests: ', err);
             return res.status(500).send('Server unable to retrieve in-progress advice requests');
@@ -343,7 +343,7 @@ router.get('/my-requests/completed', (req, res) => {
     }
     completedRequestsQuery += ';'; // Janky but need to do this in case we've got the extra details
 
-    pool.query(completedRequestsQuery, queryParams, (err, result) => {
+    req.pool.query(completedRequestsQuery, queryParams, (err, result) => {
         if (err) {
             console.error('Error retrieving completed advice requests: ', err);
             return res.status(500).send('Server unable to retrieve completed advice requests');
@@ -364,7 +364,7 @@ router.post('/my-requests/close/', async (req, res) => {
 
     const closeQuery = `UPDATE advice_requests SET status = 'Completed', closureNotes = ?, closedAt = ? WHERE requestID = ?`;
 
-    pool.query(closeQuery, [closeNotes, formattedDateTime, requestID], (err, result) => {
+    req.pool.query(closeQuery, [closeNotes, formattedDateTime, requestID], (err, result) => {
         if (err) {
             console.error('Error closing advice request: ', err);
             return res.status(500).send('Server unable to close advice request');
@@ -385,7 +385,7 @@ router.get('/manage-vehicles', (req, res) => {
     ) vi ON v.vehicleID = vi.vehicle
      JOIN Makes m ON v.make = m.makeID`;
 
-    pool.query(allVehiclesQuery, (err, result) => {
+    req.pool.query(allVehiclesQuery, (err, result) => {
         if (err) {
             console.error('Error retrieving vehicles: ', err);
             return res.status(500).send('Server unable to retrieve vehicles');

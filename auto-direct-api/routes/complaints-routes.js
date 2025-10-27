@@ -120,7 +120,7 @@ router.post('/', (req, res) => {
     complaintData.updated_at
   ];
 
-  pool.query(query, values, async (err, result) => {
+            req.pool.query(query, values, async (err, result) => {
     if (err) {
       console.error('Database error inserting complaint:', err);
       console.error('Query:', query);
@@ -175,7 +175,7 @@ router.get('/', (req, res) => {
     ORDER BY created_at DESC
   `;
 
-  pool.query(query, (err, results) => {
+            req.pool.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching complaints:', err);
       return res.status(500).json({ 
@@ -209,7 +209,7 @@ router.get('/:id', (req, res) => {
     WHERE id = ?
   `;
 
-  pool.query(query, [id], (err, results) => {
+            req.pool.query(query, [id], (err, results) => {
     if (err) {
       console.error('Error fetching complaint:', err);
       return res.status(500).json({ 
@@ -253,7 +253,7 @@ router.put('/:id', (req, res) => {
 
   const values = [status, admin_notes || null, new Date(), id];
 
-  pool.query(query, values, (err, result) => {
+            req.pool.query(query, values, (err, result) => {
     if (err) {
       console.error('Error updating complaint:', err);
       return res.status(500).json({ 

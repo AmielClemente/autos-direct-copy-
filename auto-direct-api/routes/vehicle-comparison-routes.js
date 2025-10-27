@@ -31,7 +31,7 @@ router.post('/submit-comparison', verifyToken, async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
-        pool.query(insertQuery, [
+        req.pool.query(insertQuery, [
             comparisonRequestID,
             userID,
             primaryVehicleID,
@@ -54,7 +54,7 @@ router.post('/submit-comparison', verifyToken, async (req, res) => {
                     // Get user information
                     const userQuery = 'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?';
                     const userResult = await new Promise((resolve, reject) => {
-                        pool.query(userQuery, [userID], (err, result) => {
+                        req.pool.query(userQuery, [userID], (err, result) => {
                             if (err) reject(err);
                             else resolve(result);
                         });
@@ -70,7 +70,7 @@ router.post('/submit-comparison', verifyToken, async (req, res) => {
                     `;
                     
                     const vehicleResult = await new Promise((resolve, reject) => {
-                        pool.query(vehicleQuery, vehicleIds, (err, result) => {
+                        req.pool.query(vehicleQuery, vehicleIds, (err, result) => {
                             if (err) reject(err);
                             else resolve(result);
                         });
@@ -155,7 +155,7 @@ router.get('/admin-comparisons', async (req, res) => {
             ORDER BY vcr.submittedAt DESC
         `;
 
-        pool.query(comparisonQuery, async (err, requests) => {
+        req.pool.query(comparisonQuery, async (err, requests) => {
             if (err) {
                 console.error('Database error in admin-comparisons:', err);
                 return res.status(500).json({ error: 'Failed to fetch comparison requests' });
@@ -172,7 +172,7 @@ router.get('/admin-comparisons', async (req, res) => {
                     if (request.userID) {
                         try {
                             const userResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?',
                                     [request.userID],
                                     (err, result) => {
@@ -197,7 +197,7 @@ router.get('/admin-comparisons', async (req, res) => {
                     if (request.primaryVehicleID) {
                         try {
                             const vehicleResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     `SELECT v.modelName, v.price, v.colour, ma.makeName 
                                      FROM vehicles v 
                                      LEFT JOIN makes ma ON v.makeID = ma.makeID 
@@ -224,7 +224,7 @@ router.get('/admin-comparisons', async (req, res) => {
                     if (request.secondaryVehicleID) {
                         try {
                             const vehicleResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     `SELECT v.modelName, ma.makeName 
                                      FROM vehicles v 
                                      LEFT JOIN makes ma ON v.makeID = ma.makeID 
@@ -251,7 +251,7 @@ router.get('/admin-comparisons', async (req, res) => {
                     if (request.dealerID) {
                         try {
                             const dealerResult = await new Promise((resolve, reject) => {
-                                pool.query(
+                                req.pool.query(
                                     'SELECT dealerName FROM dealers WHERE dealerID = ?',
                                     [request.dealerID],
                                     (err, result) => {
@@ -317,7 +317,7 @@ router.put('/admin/assign-dealer', async (req, res) => {
             WHERE requestID = ?
         `;
 
-        pool.query(updateQuery, [dealerID, requestID], (err, result) => {
+        req.pool.query(updateQuery, [dealerID, requestID], (err, result) => {
             if (err) {
                 console.error('Database error in assign-dealer:', err);
                 return res.status(500).json({ error: 'Failed to assign dealer' });
@@ -353,7 +353,7 @@ router.put('/admin/mark-completed', async (req, res) => {
             WHERE requestID = ?
         `;
 
-        pool.query(updateQuery, [adminNotes || null, requestID], (err, result) => {
+        req.pool.query(updateQuery, [adminNotes || null, requestID], (err, result) => {
             if (err) {
                 console.error('Database error in mark-completed:', err);
                 return res.status(500).json({ error: 'Failed to mark request as completed' });
@@ -389,7 +389,7 @@ router.put('/admin/cancel-request', async (req, res) => {
             WHERE requestID = ?
         `;
 
-        pool.query(updateQuery, [adminNotes || null, requestID], (err, result) => {
+        req.pool.query(updateQuery, [adminNotes || null, requestID], (err, result) => {
             if (err) {
                 console.error('Database error in cancel-request:', err);
                 return res.status(500).json({ error: 'Failed to cancel request' });

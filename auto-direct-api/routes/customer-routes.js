@@ -16,7 +16,7 @@ router.get('/view-advice-requests', (req, res) => {
     const allRequestsQuery = `SELECT * FROM advice_requests WHERE requesterID
     = ?`;
 
-    pool.query(allRequestsQuery, (err, result) => {
+            req.pool.query(allRequestsQuery, (err, result) => {
         if (err) {
             console.error('Error retrieving advice requests: ', err);
             return res.status(500).send('Server unable to retrieve advice requests');
@@ -39,7 +39,7 @@ router.post('/cancel-advice-request/:id', async (req, res) => {
     const cancelQuery = `UPDATE advice_requests SET status = 'Cancelled' WHERE
      requestID = ?`;
     
-    pool.query(cancelQuery), [id], (err, result) => {
+            req.pool.query(cancelQuery), [id], (err, result) => {
         if (err) {
             console.error('Error cancelling advice request: ', err);
             return res.status(500).send('Server unable to cancel advice request');

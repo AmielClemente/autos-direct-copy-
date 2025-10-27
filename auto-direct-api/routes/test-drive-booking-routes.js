@@ -116,7 +116,7 @@ router.put('/admin/update-status', async (req, res) => {
 		
 		const query = `UPDATE test_drive_bookings SET status = ? WHERE bookingID = ?`;
 		
-		pool.query(query, [status, bookingID], (err, result) => {
+		req.pool.query(query, [status, bookingID], (err, result) => {
 			if (err) {
 				console.error('Error updating booking status:', err);
 				return res.status(500).json({ error: 'Failed to update booking status' });
@@ -148,7 +148,7 @@ router.put('/admin/assign-dealer', async (req, res) => {
 		
 		const query = `UPDATE test_drive_bookings SET dealerID = ? WHERE bookingID = ?`;
 		
-		pool.query(query, [dealerID, bookingID], (err, result) => {
+		req.pool.query(query, [dealerID, bookingID], (err, result) => {
 			if (err) {
 				console.error('Error assigning dealer:', err);
 				return res.status(500).json({ error: 'Failed to assign dealer' });
@@ -185,7 +185,7 @@ router.post('/test-drive', [ verifyToken, authorizeUser ], async (req, res) => {
 			// Get user information
 			const userQuery = 'SELECT firstName, lastName, emailAddress, phone FROM users WHERE userID = ?';
 			const userResult = await new Promise((resolve, reject) => {
-				pool.query(userQuery, [userID], (err, result) => {
+				req.pool.query(userQuery, [userID], (err, result) => {
 					if (err) reject(err);
 					else resolve(result);
 				});
@@ -199,7 +199,7 @@ router.post('/test-drive', [ verifyToken, authorizeUser ], async (req, res) => {
 				WHERE v.vehicleID = ?
 			`;
 			const vehicleResult = await new Promise((resolve, reject) => {
-				pool.query(vehicleQuery, [vehicleID], (err, result) => {
+				req.pool.query(vehicleQuery, [vehicleID], (err, result) => {
 					if (err) reject(err);
 					else resolve(result);
 				});
@@ -331,7 +331,7 @@ router.put('/test-drive-status', async (req, res) => {
 
 		const query = `UPDATE test_drive_bookings SET status = ? WHERE bookingID = ?`;
 		
-		pool.query(query, [status, bookingID], (err, result) => {
+		req.pool.query(query, [status, bookingID], (err, result) => {
 			if (err) {
 				console.error('Database error updating status:', err);
 				return res.status(500).json({ error: 'Failed to update test drive status' });
@@ -366,7 +366,7 @@ router.put('/assign-dealer', async (req, res) => {
 
 		const query = `UPDATE test_drive_bookings SET dealerID = ? WHERE bookingID = ?`;
 		
-		pool.query(query, [dealerID, bookingID], (err, result) => {
+		req.pool.query(query, [dealerID, bookingID], (err, result) => {
 			if (err) {
 				console.error('Database error assigning dealer:', err);
 				return res.status(500).json({ error: 'Failed to assign dealer' });
