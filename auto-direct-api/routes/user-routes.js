@@ -87,8 +87,20 @@ router.post('/login', async (req, res) => {
 		}
 
 		let user = rows[0];
+		console.log('[LOGIN] User object keys:', Object.keys(user));
+		console.log('[LOGIN] Has passwordHash?', 'passwordHash' in user);
+		console.log('[LOGIN] Has passwordhash?', 'passwordhash' in user);
+		
+		// Try both passwordHash and passwordhash (PostgreSQL case sensitivity)
+		const userPasswordHash = user.passwordHash || user.passwordhash;
+		
+		if (!userPasswordHash) {
+			console.error('[LOGIN] No passwordHash found in user object');
+			return res.status(401).json({ message: 'User data incomplete.' });
+		}
+		
 		// Verify password
-		const passwordMatch = bcrypt.compareSync(password, user.passwordHash);
+		const passwordMatch = bcrypt.compareSync(password, userPasswordHash);
 		if (!passwordMatch) {
 			return res.status(401).json({ message: 'Email and password do not match.' });
 		}
