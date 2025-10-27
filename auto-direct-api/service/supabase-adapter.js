@@ -63,8 +63,21 @@ class SupabaseAdapter {
       console.error('[Supabase Adapter] Error:', error);
       throw error;
     }
-    console.log('[Supabase Adapter] Results:', data?.length || 0, 'rows');
-    return data || [];
+    
+    // Convert lowercase column names to camelCase for compatibility
+    const convertedData = (data || []).map(row => this.convertToCamelCase(row));
+    console.log('[Supabase Adapter] Results:', convertedData.length, 'rows');
+    return convertedData;
+  }
+
+  convertToCamelCase(obj) {
+    const newObj = {};
+    for (const key in obj) {
+      // Convert snake_case or lowercase to camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      newObj[camelKey] = obj[key];
+    }
+    return newObj;
   }
 
   async handleJoinQuery(sql, params) {
