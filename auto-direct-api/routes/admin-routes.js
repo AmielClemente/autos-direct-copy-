@@ -534,7 +534,7 @@ router.put("/reactivateUser", [ verifyToken, authorizeUser ], async (req, res) =
 		// Update user status to Active and restore original email
 		const query = `UPDATE users SET user_status = 'Active', emailAddress = SUBSTRING_INDEX(emailAddress, '.del', 1) WHERE userID = ?`;
 		
-		const [result] = await pool.promise().query(query, [userID]);
+		const [result] = await req.pool.query(query, [userID]);
 		
 		if (result.affectedRows === 0) {
 			return res.status(404).json({ error: 'User not found' });
@@ -559,7 +559,7 @@ router.post("/generateInvitation", [ verifyToken, authorizeUser ], async (req, r
 		}
 
 		// Check if email already exists (only for active users)
-		const existingUsers = await pool.promise().query('SELECT userID FROM users WHERE emailAddress = ? AND user_status = "Active"', [email]);
+		const existingUsers = await req.pool.query('SELECT userID FROM users WHERE emailAddress = ? AND user_status = "Active"', [email]);
 		if (existingUsers[0].length > 0) {
 			return res.status(400).json({ error: 'Email address already exists' });
 		}
@@ -570,7 +570,7 @@ router.post("/generateInvitation", [ verifyToken, authorizeUser ], async (req, r
 		const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
 
 		// Store token in database (create table if needed)
-		await pool.promise().query(`
+		await req.pool.query(`
 			CREATE TABLE IF NOT EXISTS registration_tokens (
 				token VARCHAR(64) PRIMARY KEY,
 				email VARCHAR(45) NOT NULL,
@@ -581,7 +581,7 @@ router.post("/generateInvitation", [ verifyToken, authorizeUser ], async (req, r
 			)
 		`);
 
-		await pool.promise().query(
+		await req.pool.query(
 			`INSERT INTO registration_tokens (token, email, roles, expiresAt, createdBy) 
 			 VALUES (?, ?, ?, ?, ?)`,
 			[token, email, JSON.stringify(roles), expiresAt, req.userID]
@@ -625,7 +625,7 @@ router.get("/validateInvitation/:token", async (req, res) => {
 	try {
 		const { token } = req.params;
 		
-		const result = await pool.promise().query(
+		const result = await req.pool.query(
 			'SELECT email, roles, expiresAt FROM registration_tokens WHERE token = ? AND expiresAt > NOW()',
 			[token]
 		);
@@ -657,7 +657,7 @@ router.post("/completeInternalRegistration", async (req, res) => {
 		}
 
 		// Validate token and get data
-		const tokenResult = await pool.promise().query(
+		const tokenResult = await req.pool.query(
 			'SELECT email, roles, expiresAt FROM registration_tokens WHERE token = ? AND expiresAt > NOW()',
 			[token]
 		);
@@ -671,7 +671,7 @@ router.post("/completeInternalRegistration", async (req, res) => {
 		const roles = JSON.parse(tokenData.roles);
 
 		// Check if email already exists (only for active users)
-		const existingUsers = await pool.promise().query('SELECT userID FROM users WHERE emailAddress = ? AND user_status = "Active"', [email]);
+		const existingUsers = await req.pool.query('SELECT userID FROM users WHERE emailAddress = ? AND user_status = "Active"', [email]);
 		if (existingUsers[0].length > 0) {
 			return res.status(400).json({ error: 'Email address already exists' });
 		}
@@ -686,7 +686,7 @@ router.post("/completeInternalRegistration", async (req, res) => {
 		const postcode = 2000;
 
 		// Create the user
-		await pool.promise().query(
+		await req.pool.query(
 			`INSERT INTO users (userID, firstName, lastName, emailAddress, phone, passwordHash, user_status, createdTime, streetNo, streetName, suburb, postcode) 
 			 VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)`,
 			[userID, firstName, lastName, email, phone || "00000000", passwordHash, 'Active', streetNo, streetName, suburb, postcode]
@@ -695,7 +695,7 @@ router.post("/completeInternalRegistration", async (req, res) => {
 		// If user is a Manufacturer, create manufacturer profile
 		if (roles.includes('Manufacturer') && companyName && abn) {
 			const manufacturerID = uuidv4();
-			await pool.promise().query(
+			await req.pool.query(
 				`INSERT INTO manufacturers (manufacturerID, manufacturerName, ABN, country, manufacturerStatus) 
 				 VALUES (?, ?, ?, ?, ?)`,
 				[manufacturerID, companyName, abn, businessAddress || 'Australia', 'Active']
@@ -710,7 +710,7 @@ router.post("/completeInternalRegistration", async (req, res) => {
 		}
 
 		// Delete the used token
-		await pool.promise().query('DELETE FROM registration_tokens WHERE token = ?', [token]);
+		await req.pool.query('DELETE FROM registration_tokens WHERE token = ?', [token]);
 
 		res.status(201).json({ message: 'Registration completed successfully' });
 	} catch (err) {
@@ -726,7 +726,7 @@ router.get("/pendingRegistrations", [verifyToken, authorizeUser], async (req, re
 			return res.status(403).json({ error: 'User does not have permission for Admin actions!' });
 		}
 
-		const [tokens] = await pool.promise().query(
+		const [tokens] = await req.pool.query(
 			`SELECT rt.token, rt.email, rt.roles, rt.createdAt, rt.expiresAt 
 			 FROM registration_tokens rt
 			 LEFT JOIN users u ON rt.email = u.emailAddress AND u.user_status = 'Active'
@@ -760,7 +760,7 @@ router.post("/resendInvitation", [verifyToken, authorizeUser], async (req, res) 
 		const { token } = req.body;
 
 		// Get token data
-		const [tokenResult] = await pool.promise().query(
+		const [tokenResult] = await req.pool.query(
 			'SELECT email, roles, expiresAt FROM registration_tokens WHERE token = ?',
 			[token]
 		);
@@ -800,7 +800,7 @@ router.delete("/pendingRegistrations/:token", [verifyToken, authorizeUser], asyn
 		const { token } = req.params;
 
 		// Delete the token
-		const result = await pool.promise().query('DELETE FROM registration_tokens WHERE token = ?', [token]);
+		const result = await req.pool.query('DELETE FROM registration_tokens WHERE token = ?', [token]);
 
 		if (result[0].affectedRows === 0) {
 			return res.status(404).json({ error: 'Invitation token not found' });
