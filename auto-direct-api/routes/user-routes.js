@@ -90,6 +90,10 @@ router.post('/login', async (req, res) => {
 		console.log('[LOGIN] User found:', user.emailAddress);
 		console.log('[LOGIN] Has passwordHash?', !!user.passwordHash);
 		console.log('[LOGIN] PasswordHash length:', user.passwordHash?.length);
+		console.log('[LOGIN] Full passwordHash:', user.passwordHash);
+		console.log('[LOGIN] Password received:', password);
+		console.log('[LOGIN] Password length:', password?.length);
+		console.log('[LOGIN] Password bytes:', Buffer.from(password).toString('hex'));
 		
 		if (!user.passwordHash) {
 			console.error('[LOGIN] No passwordHash found in user object');
