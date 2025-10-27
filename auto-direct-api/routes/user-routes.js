@@ -98,6 +98,15 @@ router.post('/login', async (req, res) => {
 		
 		// Verify password
 		console.log('[LOGIN] Attempting password comparison...');
+		console.log('[LOGIN] PasswordHash format - starts with $2:', user.passwordHash?.startsWith('$2'));
+		console.log('[LOGIN] PasswordHash format - length:', user.passwordHash?.length);
+		
+		// Check if passwordHash is actually a bcrypt hash
+		if (!user.passwordHash || !user.passwordHash.startsWith('$2')) {
+			console.error('[LOGIN] Invalid passwordHash format:', user.passwordHash?.substring(0, 20));
+			return res.status(401).json({ message: 'Invalid password format in database.' });
+		}
+		
 		const passwordMatch = bcrypt.compareSync(password, user.passwordHash);
 		console.log('[LOGIN] Password match result:', passwordMatch);
 		
