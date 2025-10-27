@@ -1,7 +1,11 @@
+console.log('[START] Loading dependencies...');
+
 const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+
+console.log('[START] Basic dependencies loaded');
 
 // Import routes with error handling
 let userRoutes, vehicleRoutes, manufacturerRoutes, adminRoutes, dealerRoutes;
@@ -10,6 +14,7 @@ let financeRequestsRoutes, vehicleComparisonRoutes, complaintsRoutes, chatbotRou
 
 // Import routes with error handling - don't crash if one fails
 try {
+  console.log('[START] Loading routes...');
   userRoutes = require('./routes/user-routes');
   vehicleRoutes = require('./routes/vehicle-routes');
   manufacturerRoutes = require('./routes/manufacturer-routes');
@@ -23,10 +28,10 @@ try {
   vehicleComparisonRoutes = require('./routes/vehicle-comparison-routes');
   complaintsRoutes = require('./routes/complaints-routes');
   chatbotRoutes = require('./routes/chatbot-routes');
-  console.log('All routes loaded successfully');
+  console.log('[START] All routes loaded successfully');
 } catch (error) {
-  console.error('ERROR loading routes:', error);
-  console.error('ERROR stack:', error.stack);
+  console.error('[START] ERROR loading routes:', error.message);
+  console.error('[START] ERROR stack:', error.stack);
   // Don't throw - let the app start and handle errors at runtime
 }
 
@@ -307,19 +312,28 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Export app for Vercel serverless functions with error handling
 try {
-  console.log('Exporting Express app for Vercel serverless functions');
+  console.log('[EXPORT] Exporting Express app');
   module.exports = app;
+  console.log('[EXPORT] Successfully exported app');
 } catch (error) {
-  console.error('FATAL ERROR in module initialization:', error);
+  console.error('[EXPORT] FATAL ERROR:', error);
+  console.error('[EXPORT] Stack:', error.stack);
   // Export a minimal app that returns errors as JSON
   const errorApp = express();
+  errorApp.use((req, res, next) => {
+    console.log('[ERROR_APP] Request:', req.method, req.path);
+    next();
+  });
   errorApp.use(cors());
   errorApp.use(express.json());
-  errorApp.use((req, res) => {
+  errorApp.get('*', (req, res) => {
     res.status(500).json({ 
       error: 'Server initialization failed', 
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      path: req.path,
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined 
     });
   });
   module.exports = errorApp;
 }
+
+console.log('[EXPORT] Module load complete');
