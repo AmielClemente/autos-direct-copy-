@@ -144,7 +144,8 @@ router.post('/login', async (req, res) => {
 			console.log('[LOGIN] First row:', JSON.stringify(rolesData[0], null, 2));
 		}
 		
-		const roles = rolesData.map((row) => row.label);
+		// Extract label - handle both camelCase and lowercase field names
+		const roles = rolesData.map((row) => row.label || row.Label || row.role || row.Role);
 		console.log('[LOGIN] roles:', roles);
 		console.log('[LOGIN] roles includes Administrator:', roles.includes('Administrator'));
 
