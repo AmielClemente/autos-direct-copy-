@@ -90,6 +90,9 @@ router.post('/login', async (req, res) => {
 	}
 	
 	try {
+		// Trim password to remove any whitespace
+		const trimmedPassword = password.trim();
+		
 		// Pass req.pool to the service function
 		const rows = await getUserByEmail(emailAddress, req.pool);
 		if (rows.length == 0) {
@@ -101,9 +104,9 @@ router.post('/login', async (req, res) => {
 		console.log('[LOGIN] Has passwordHash?', !!user.passwordHash);
 		console.log('[LOGIN] PasswordHash length:', user.passwordHash?.length);
 		console.log('[LOGIN] Full passwordHash:', user.passwordHash);
-		console.log('[LOGIN] Password received:', password);
-		console.log('[LOGIN] Password length:', password?.length);
-		console.log('[LOGIN] Password bytes:', Buffer.from(password).toString('hex'));
+		console.log('[LOGIN] Password received:', trimmedPassword);
+		console.log('[LOGIN] Password length:', trimmedPassword?.length);
+		console.log('[LOGIN] Password bytes:', Buffer.from(trimmedPassword).toString('hex'));
 		
 		if (!user.passwordHash) {
 			console.error('[LOGIN] No passwordHash found in user object');
@@ -115,7 +118,7 @@ router.post('/login', async (req, res) => {
 		console.log('[LOGIN] PasswordHash format - starts with $2:', user.passwordHash?.startsWith('$2'));
 		console.log('[LOGIN] PasswordHash format - length:', user.passwordHash?.length);
 		console.log('[LOGIN] PasswordHash (first 30 chars):', user.passwordHash?.substring(0, 30));
-		console.log('[LOGIN] Password being compared:', password);
+		console.log('[LOGIN] Password being compared:', trimmedPassword);
 		
 		// Check if passwordHash is actually a bcrypt hash
 		if (!user.passwordHash || !user.passwordHash.startsWith('$2')) {
@@ -123,7 +126,7 @@ router.post('/login', async (req, res) => {
 			return res.status(401).json({ message: 'Invalid password format in database.' });
 		}
 		
-		const passwordMatch = bcrypt.compareSync(password, user.passwordHash);
+		const passwordMatch = bcrypt.compareSync(trimmedPassword, user.passwordHash);
 		console.log('[LOGIN] Password match result:', passwordMatch);
 		
 		if (!passwordMatch) {
