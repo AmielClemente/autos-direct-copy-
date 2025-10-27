@@ -87,7 +87,8 @@ class SupabaseAdapter {
       'user_status': 'userStatus',
       'postcode': 'postcode',
       'suburb': 'suburb',
-      'phone': 'phone'
+      'phone': 'phone',
+      'label': 'label' // Keep label as is
     };
     
     for (const key in obj) {
