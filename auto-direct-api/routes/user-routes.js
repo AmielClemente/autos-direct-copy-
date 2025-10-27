@@ -62,6 +62,16 @@ router.post('/register', async (req, res) => {
 	}
 });
 
+// Test password hash
+router.post('/test-password', async (req, res) => {
+	const { password } = req.body;
+	const testHash = '$2b$10$UV9yOc09AnDWSdiu/2vxru8B1Z2t.J3n2fpTdaNPF9gWaeoP3hfdi';
+	const match = bcrypt.compareSync(password, testHash);
+	console.log('[TEST] Password:', password);
+	console.log('[TEST] Match:', match);
+	res.json({ match, passwordReceived: password });
+});
+
 // User login
 router.post('/login', async (req, res) => {
 	const { emailAddress, password, recaptchaToken } = req.body;
