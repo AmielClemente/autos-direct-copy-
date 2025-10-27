@@ -1,9 +1,19 @@
 const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
-const pool = mysql.createPool(connectionConfig);
+
+// Only create MySQL pool in development
+let pool = null;
+if (process.env.NODE_ENV !== 'production') {
+	try {
+		pool = mysql.createPool(connectionConfig);
+	} catch (err) {
+		console.log('MySQL pool creation skipped in production');
+	}
+}
 
 const createUserRole = async ( userRolesNewID, userNewID, customerRoleID, dbClient = null ) => {
-	const db = dbClient || pool;
+	// In production, dbClient must be provided (SupabaseAdapter)
+	const db = dbClient || (process.env.NODE_ENV !== 'production' ? pool : null);
 	
 	if (!db) {
 		console.error('createUserRole: Database client not provided');
@@ -45,7 +55,8 @@ const getUserAuth = async (userID) => {
 }
 
 const getRoleIDByLabel = async (roleLabel, dbClient = null) => {
-	const db = dbClient || pool;
+	// In production, dbClient must be provided (SupabaseAdapter)
+	const db = dbClient || (process.env.NODE_ENV !== 'production' ? pool : null);
 	
 	if (!db) {
 		console.error('getRoleIDByLabel: Database client not provided');
@@ -68,7 +79,8 @@ const getRoleIDByLabel = async (roleLabel, dbClient = null) => {
 };
 
 const getUserRolesByID = async (userID, dbClient = null) => {
-	const db = dbClient || pool;
+	// In production, dbClient must be provided (SupabaseAdapter)
+	const db = dbClient || (process.env.NODE_ENV !== 'production' ? pool : null);
 	
 	if (!db) {
 		console.error('getUserRolesByID: Database client not provided');
