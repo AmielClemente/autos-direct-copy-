@@ -8,6 +8,7 @@ let userRoutes, vehicleRoutes, manufacturerRoutes, adminRoutes, dealerRoutes;
 let testDriveBookingRoutes, purchasesRoute, orderProcessingRoutes, financeRoutes;
 let financeRequestsRoutes, vehicleComparisonRoutes, complaintsRoutes, chatbotRoutes;
 
+// Import routes with error handling - don't crash if one fails
 try {
   userRoutes = require('./routes/user-routes');
   vehicleRoutes = require('./routes/vehicle-routes');
@@ -24,8 +25,9 @@ try {
   chatbotRoutes = require('./routes/chatbot-routes');
   console.log('All routes loaded successfully');
 } catch (error) {
-  console.error('Error loading routes:', error);
-  throw error;
+  console.error('ERROR loading routes:', error);
+  console.error('ERROR stack:', error.stack);
+  // Don't throw - let the app start and handle errors at runtime
 }
 
 const app = express();
@@ -201,20 +203,27 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-app.use('/user', userRoutes);
-app.use('/vehicle', vehicleRoutes);
-app.use('/manufacturer', manufacturerRoutes);
-app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
-app.use('/api/chatbot', chatbotRoutes);
-app.use('/admin', adminRoutes);
-app.use("/manage-dealerships", dealerRoutes);
-app.use("/test-drive", testDriveBookingRoutes);
-app.use("/purchases", purchasesRoute);
-app.use("/order-processing", orderProcessingRoutes);
-app.use("/finance", financeRoutes);
-app.use("/finance-requests", financeRequestsRoutes);
-app.use("/vehicle-comparison", vehicleComparisonRoutes);
-app.use("/api/complaints", complaintsRoutes);
+// Only use routes if they were loaded successfully
+if (userRoutes) app.use('/user', userRoutes);
+if (vehicleRoutes) app.use('/vehicle', vehicleRoutes);
+if (manufacturerRoutes) app.use('/manufacturer', manufacturerRoutes);
+if (dealerRoutes) app.use("/manage-dealerships", dealerRoutes);
+if (testDriveBookingRoutes) app.use("/test-drive", testDriveBookingRoutes);
+if (purchasesRoute) app.use("/purchases", purchasesRoute);
+if (orderProcessingRoutes) app.use("/order-processing", orderProcessingRoutes);
+if (financeRoutes) app.use("/finance", financeRoutes);
+if (financeRequestsRoutes) app.use("/finance-requests", financeRequestsRoutes);
+if (vehicleComparisonRoutes) app.use("/vehicle-comparison", vehicleComparisonRoutes);
+if (complaintsRoutes) app.use("/api/complaints", complaintsRoutes);
+if (chatbotRoutes) app.use('/api/chatbot', chatbotRoutes);
+if (adminRoutes) app.use('/admin', adminRoutes);
+
+// Static files with error handling
+try {
+  app.use('/vehicle-images', express.static(path.join(__dirname, 'vehicle-images')));
+} catch (error) {
+  console.error('Error serving static files:', error);
+}
 
 // Only connect to MySQL in development
 if (process.env.NODE_ENV !== 'production') {
