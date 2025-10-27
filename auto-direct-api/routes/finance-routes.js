@@ -40,7 +40,7 @@ router.get('/dashboard-data', async (req, res) => {
       ORDER BY u.name ASC
     `;
 
-    connection.query(query, (error, results) => {
+    req.pool.query(query, (error, results) => {
       if (error) {
         console.error('Database error:', error);
         return res.status(500).json({ 
@@ -258,7 +258,7 @@ router.get('/comparison-data', async (req, res) => {
       ORDER BY created_at DESC
     `;
 
-    connection.query(query, (error, results) => {
+    req.pool.query(query, (error, results) => {
       if (error) {
         console.error('Database error:', error);
         return res.status(500).json({ 
