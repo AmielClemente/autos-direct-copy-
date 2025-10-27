@@ -1,13 +1,13 @@
 const createUser = async (userNewID, user, dbClient = null) => {
-	// Use the fallback pool from db-singleton only in development
-	const { getPool } = require('./db-singleton.js');
-	const pool = getPool();
+	// Use the passed dbClient (SupabaseAdapter in production)
+	const db = dbClient;
+	
+	if (!db) {
+		console.error('createUser: Database client not provided');
+		throw new Error('Database client not provided');
+	}
+	
 	try {
-		if (!dbClient && !pool) {
-			throw new Error('Database pool not initialized. Please set up Supabase environment variables.');
-		}
-
-		const db = dbClient || pool;
 		const {firstName, lastName, emailAddress, passwordHash, phoneNumber, streetNo, streetName, suburb, postcode } = user;
 
 		// Prep SQL query with added timestamp fro createdAt

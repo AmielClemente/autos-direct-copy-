@@ -44,18 +44,18 @@ router.post('/register', async (req, res) => {
 		// 	return res.status(400).json({error: "reCAPTCHA verification failed"});
 		// }
 		
-		const emailExists = await getUserByEmail(emailAddress);
+		const emailExists = await getUserByEmail(emailAddress, req.pool);
 		if (emailExists.length > 0) {
 			throw "Your chosen email is already registered";
 		}
 		req.body.passwordHash = bcrypt.hashSync(password, bcrypt.genSaltSync(12));
 		const userNewID = uuidv4();
 		const userRolesNewID = uuidv4();
-		const customerRoleID = await getRoleIDByLabel('Customer');
+		const customerRoleID = await getRoleIDByLabel('Customer', req.pool);
 		
 		// Execute the query
-		await createUser(userNewID, req.body);
-		await createUserRole( userRolesNewID, userNewID, customerRoleID )
+		await createUser(userNewID, req.body, req.pool);
+		await createUserRole( userRolesNewID, userNewID, customerRoleID, req.pool )
 		res.status(201).send('User has been added');
 	} catch (err) {
 		res.status(400).json({error: "Server error: " + err});
@@ -134,7 +134,7 @@ router.post('/login', async (req, res) => {
 		}
 
 		const token = jwt.sign({ userId: user.userID }, jwtKey, {	expiresIn: '1d' });
-		const rolesData = await getUserRolesByID(user.userID);
+		const rolesData = await getUserRolesByID(user.userID, req.pool);
 		const roles = rolesData.map((row) => row.label);
 
 		res.status(200).send({ token: token, userID: user.userID, roles, firstName: user.firstName, });

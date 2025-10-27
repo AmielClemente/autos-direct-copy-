@@ -2,11 +2,18 @@ const mysql = require('mysql2');
 const { connectionConfig } = require('../config/connectionsConfig.js');
 const pool = mysql.createPool(connectionConfig);
 
-const createUserRole = async ( userRolesNewID, userNewID, customerRoleID ) => {
+const createUserRole = async ( userRolesNewID, userNewID, customerRoleID, dbClient = null ) => {
+	const db = dbClient || pool;
+	
+	if (!db) {
+		console.error('createUserRole: Database client not provided');
+		throw new Error('Database client not provided');
+	}
+	
 	try {
 		const query = `INSERT INTO user_roles (userRoleID, userID, roleID)	VALUES (?, ?, ?)`;
 		return new Promise((resolve, reject) => {
-			pool.query(query, [ userRolesNewID, userNewID, customerRoleID ], 
+			db.query(query, [ userRolesNewID, userNewID, customerRoleID ], 
 				(err, result) => {
 				if (err) reject(err);
 					resolve(result);
@@ -37,11 +44,18 @@ const getUserAuth = async (userID) => {
 	}
 }
 
-const getRoleIDByLabel = async (roleLabel) => {
+const getRoleIDByLabel = async (roleLabel, dbClient = null) => {
+	const db = dbClient || pool;
+	
+	if (!db) {
+		console.error('getRoleIDByLabel: Database client not provided');
+		throw new Error('Database client not provided');
+	}
+	
 	try {
 		const query = `SELECT roleID FROM roles WHERE roles.label = ?`
 		return new Promise((resolve, reject) => {
-			pool.query(query, [roleLabel], 
+			db.query(query, [roleLabel], 
 			(err, result) => {
 				if (err) reject(err);
 				resolve(result[0].roleID);
@@ -53,11 +67,18 @@ const getRoleIDByLabel = async (roleLabel) => {
 	}
 };
 
-const getUserRolesByID = async (userID) => {
+const getUserRolesByID = async (userID, dbClient = null) => {
+	const db = dbClient || pool;
+	
+	if (!db) {
+		console.error('getUserRolesByID: Database client not provided');
+		throw new Error('Database client not provided');
+	}
+	
 	try {
 		const query = `SELECT * FROM user_roles JOIN roles ON user_roles.roleID = roles.roleID WHERE user_roles.userID = ?;`
 		return new Promise((resolve, reject) => {
-			pool.query(query, [userID],
+			db.query(query, [userID],
 			(err, result) => {
 				if (err) reject(err);
 				resolve(result);
