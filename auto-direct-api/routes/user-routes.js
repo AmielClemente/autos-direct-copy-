@@ -100,6 +100,8 @@ router.post('/login', async (req, res) => {
 		console.log('[LOGIN] Attempting password comparison...');
 		console.log('[LOGIN] PasswordHash format - starts with $2:', user.passwordHash?.startsWith('$2'));
 		console.log('[LOGIN] PasswordHash format - length:', user.passwordHash?.length);
+		console.log('[LOGIN] PasswordHash (first 30 chars):', user.passwordHash?.substring(0, 30));
+		console.log('[LOGIN] Password being compared:', password);
 		
 		// Check if passwordHash is actually a bcrypt hash
 		if (!user.passwordHash || !user.passwordHash.startsWith('$2')) {
