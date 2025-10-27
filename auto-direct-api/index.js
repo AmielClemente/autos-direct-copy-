@@ -2,19 +2,31 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
-const userRoutes = require('./routes/user-routes');
-const vehicleRoutes = require('./routes/vehicle-routes');
-const manufacturerRoutes = require('./routes/manufacturer-routes');
-const adminRoutes = require('./routes/admin-routes');
-const dealerRoutes = require('./routes/dealer-routes');
-const testDriveBookingRoutes = require('./routes/test-drive-booking-routes');
-const purchasesRoute = require('./routes/purchase-routes');
-const orderProcessingRoutes = require('./routes/order-processing-routes');
-const financeRoutes = require('./routes/finance-routes');
-const financeRequestsRoutes = require('./routes/finance-requests-routes');
-const vehicleComparisonRoutes = require('./routes/vehicle-comparison-routes');
-const complaintsRoutes = require('./routes/complaints-routes');
-const chatbotRoutes = require('./routes/chatbot-routes');
+
+// Import routes with error handling
+let userRoutes, vehicleRoutes, manufacturerRoutes, adminRoutes, dealerRoutes;
+let testDriveBookingRoutes, purchasesRoute, orderProcessingRoutes, financeRoutes;
+let financeRequestsRoutes, vehicleComparisonRoutes, complaintsRoutes, chatbotRoutes;
+
+try {
+  userRoutes = require('./routes/user-routes');
+  vehicleRoutes = require('./routes/vehicle-routes');
+  manufacturerRoutes = require('./routes/manufacturer-routes');
+  adminRoutes = require('./routes/admin-routes');
+  dealerRoutes = require('./routes/dealer-routes');
+  testDriveBookingRoutes = require('./routes/test-drive-booking-routes');
+  purchasesRoute = require('./routes/purchase-routes');
+  orderProcessingRoutes = require('./routes/order-processing-routes');
+  financeRoutes = require('./routes/finance-routes');
+  financeRequestsRoutes = require('./routes/finance-requests-routes');
+  vehicleComparisonRoutes = require('./routes/vehicle-comparison-routes');
+  complaintsRoutes = require('./routes/complaints-routes');
+  chatbotRoutes = require('./routes/chatbot-routes');
+  console.log('All routes loaded successfully');
+} catch (error) {
+  console.error('Error loading routes:', error);
+  throw error;
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -117,6 +129,20 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json()); // Needed to parse JSON bodies
+
+// Add error handler early to catch all errors
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  console.error('Error stack:', err.stack);
+  
+  // Always return JSON, never HTML
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message || 'An error occurred',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 // Make database clients available to routes
 app.use((req, res, next) => {
@@ -246,26 +272,17 @@ try {
 
 // End of database connection test
 
+// Catch-all for unmatched routes - return JSON
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.path });
+});
+
 // For local development
 if (process.env.NODE_ENV !== 'production') {
   server.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`)
   })
 }
-
-// Global error handler to prevent HTML error pages
-app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  console.error('Error stack:', err.stack);
-  
-  // Always return JSON, never HTML
-  res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message || 'An error occurred',
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-});
 
 // Export app for Vercel serverless functions with error handling
 try {
