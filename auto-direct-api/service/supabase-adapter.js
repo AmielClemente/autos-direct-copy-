@@ -72,9 +72,34 @@ class SupabaseAdapter {
 
   convertToCamelCase(obj) {
     const newObj = {};
+    
+    // Common field mapping from PostgreSQL lowercase to camelCase
+    const fieldMap = {
+      'userid': 'userID',
+      'firstname': 'firstName',
+      'lastname': 'lastName',
+      'emailaddress': 'emailAddress',
+      'passwordhash': 'passwordHash',
+      'phonenumber': 'phoneNumber',
+      'streetno': 'streetNo',
+      'streetname': 'streetName',
+      'createdtime': 'createdTime',
+      'user_status': 'userStatus',
+      'postcode': 'postcode',
+      'suburb': 'suburb',
+      'phone': 'phone'
+    };
+    
     for (const key in obj) {
-      // Convert snake_case or lowercase to camelCase
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      // First check our mapping
+      const lowerKey = key.toLowerCase();
+      let camelKey = fieldMap[lowerKey] || key;
+      
+      // If key has underscores, convert snake_case to camelCase
+      if (key.includes('_') && !fieldMap[lowerKey]) {
+        camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      }
+      
       newObj[camelKey] = obj[key];
     }
     return newObj;
