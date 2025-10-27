@@ -135,7 +135,10 @@ router.post('/login', async (req, res) => {
 
 		const token = jwt.sign({ userId: user.userID }, jwtKey, {	expiresIn: '1d' });
 		const rolesData = await getUserRolesByID(user.userID, req.pool);
+		console.log('[LOGIN] rolesData:', JSON.stringify(rolesData, null, 2));
 		const roles = rolesData.map((row) => row.label);
+		console.log('[LOGIN] roles:', roles);
+		console.log('[LOGIN] roles includes Administrator:', roles.includes('Administrator'));
 
 		res.status(200).send({ token: token, userID: user.userID, roles, firstName: user.firstName, });
 	} catch (error) {
