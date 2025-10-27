@@ -136,6 +136,14 @@ router.post('/login', async (req, res) => {
 		const token = jwt.sign({ userId: user.userID }, jwtKey, {	expiresIn: '1d' });
 		const rolesData = await getUserRolesByID(user.userID, req.pool);
 		console.log('[LOGIN] rolesData:', JSON.stringify(rolesData, null, 2));
+		console.log('[LOGIN] rolesData length:', rolesData?.length);
+		
+		// Try to extract label from the first row to see what keys are available
+		if (rolesData && rolesData.length > 0) {
+			console.log('[LOGIN] First row keys:', Object.keys(rolesData[0]));
+			console.log('[LOGIN] First row:', JSON.stringify(rolesData[0], null, 2));
+		}
+		
 		const roles = rolesData.map((row) => row.label);
 		console.log('[LOGIN] roles:', roles);
 		console.log('[LOGIN] roles includes Administrator:', roles.includes('Administrator'));
