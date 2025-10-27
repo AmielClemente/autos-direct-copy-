@@ -122,9 +122,13 @@ app.use(express.json()); // Needed to parse JSON bodies
 app.use((req, res, next) => {
   req.supabase = supabase;
   
+  console.log('[Middleware] Initializing database clients for', req.method, req.path);
+  console.log('[Middleware] Supabase available:', !!supabase);
+  console.log('[Middleware] Environment:', process.env.NODE_ENV);
+  
   // In production with Supabase, use SupabaseAdapter to make Supabase work like MySQL pool
   if (supabase && process.env.NODE_ENV === 'production') {
-    console.log('[Middleware] Using Supabase adapter');
+    console.log('[Middleware] Using Supabase adapter for production');
     const adapter = new SupabaseAdapter(supabase);
     req.pool = {
       query: (sql, params, callback) => {
@@ -145,7 +149,7 @@ app.use((req, res, next) => {
       }
     };
   } else {
-    console.log('[Middleware] Using MySQL pool');
+    console.log('[Middleware] Using MySQL pool for development');
     req.pool = pool;
   }
   
@@ -243,6 +247,20 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`App listening on port ${PORT}`)
   })
 }
+
+// Global error handler to prevent HTML error pages
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  console.error('Error stack:', err.stack);
+  
+  // Always return JSON, never HTML
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message || 'An error occurred',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 // Export app for Vercel serverless functions
 module.exports = app;

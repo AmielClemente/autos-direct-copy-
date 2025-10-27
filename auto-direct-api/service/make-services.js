@@ -25,39 +25,49 @@ const getMakeID = async (makeName, dbClient = null) => {
 
 const getAllMakes = async (dbClient = null, supabaseClient = null) => {
 	try {
-		// Always use Supabase
+		console.log('[getAllMakes] Starting...');
+		console.log('[getAllMakes] supabaseClient:', !!supabaseClient);
+		
+		// Always use Supabase if provided
 		if (supabaseClient) {
+			console.log('[getAllMakes] Using provided Supabase client');
 			const { data, error } = await supabaseClient
 				.from('makes')
 				.select('*');
 			
 			if (error) {
-				console.error('Error in getAllMakes from Supabase:', error);
+				console.error('[getAllMakes] Supabase error:', error);
 				return [];
 			}
+			
+			console.log('[getAllMakes] Fetched', data?.length || 0, 'makes');
 			return data || [];
 		}
 
 		// Fallback: try to get Supabase from singleton
+		console.log('[getAllMakes] No client provided, trying singleton...');
 		const { getSupabase } = require('./db-singleton.js');
 		const supabase = getSupabase();
 		
 		if (supabase) {
+			console.log('[getAllMakes] Using Supabase from singleton');
 			const { data, error } = await supabase
 				.from('makes')
 				.select('*');
 			
 			if (error) {
-				console.error('Error in getAllMakes from Supabase:', error);
+				console.error('[getAllMakes] Singleton Supabase error:', error);
 				return [];
 			}
+			console.log('[getAllMakes] Fetched', data?.length || 0, 'makes');
 			return data || [];
 		}
 		
-		console.error('getAllMakes: No Supabase client available');
+		console.error('[getAllMakes] No Supabase client available');
 		return [];
 	} catch (err) {
-		console.error('Error in getAllMakes catch:', err);
+		console.error('[getAllMakes] Error in getAllMakes catch:', err);
+		console.error('[getAllMakes] Error stack:', err.stack);
 		return []; // Return empty array instead of throwing
 	}
 };

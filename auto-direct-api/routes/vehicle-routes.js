@@ -467,13 +467,22 @@ router.post('/manage-vehicles/delete/:id', async (req, res) => {
 
 router.get('/makes', async (req, res) => {
 	try {
-		// Pass req.pool and req.supabase to the service function
-		const makes = await getAllMakes(req.pool, req.supabase);
-		res.status(200).json({ makes: makes });
+		console.log('[Makes Route] Starting makes fetch...');
+		console.log('[Makes Route] req.supabase:', !!req.supabase);
+		
+		// Pass req.supabase to the service function
+		const makes = await getAllMakes(null, req.supabase);
+		
+		console.log('[Makes Route] Makes fetched:', makes?.length || 0);
+		res.status(200).json({ makes: makes || [] });
 	} catch (error) {
 		console.error('Error retrieving Makes:', error);
-		// Return empty array instead of crashing
-		res.status(200).json({ makes: [] });
+		console.error('Error stack:', error.stack);
+		// Return empty array with error details for debugging
+		res.status(200).json({ 
+			makes: [], 
+			error: process.env.NODE_ENV === 'production' ? 'Failed to retrieve makes' : error.message 
+		});
 	}
 })
 
