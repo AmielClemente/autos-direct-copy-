@@ -80,20 +80,41 @@ const sendInvitationEmail = async (email, invitationUrl, roles, expiresAt) => {
 * This function returns all Employees of Auto's Direct. It will primarily be used
 * for Advice Request Assignment.
 */
-router.get('/advice-requests/employees', (req, res) => {
-    const allEmployeesQuery = `SELECT u.userID, u.firstName, u.lastName
-    FROM users AS u
-    JOIN user_roles AS ur ON u.userID = ur.userID
-    WHERE ur.roleID = 'f717e308-64de-4a7a-a050-892221e982bf'`;
-
-    req.pool.query(allEmployeesQuery, (err, result) => {
-        if (err) {
-            console.error('Error retrieving employees:', err);
-            return res.status(500).send('Server unable to retrieve employees');
-        }
-        console.log("Query result:", result);
-        res.status(200).json(result);
-    })
+router.get('/advice-requests/employees', async (req, res) => {
+    try {
+        // First get userIDs with Employee role
+        const roleQuery = `SELECT userID FROM user_roles WHERE roleID = 'f717e308-64de-4a7a-a050-892221e982bf'`;
+        
+        req.pool.query(roleQuery, (err, roleResult) => {
+            if (err) {
+                console.error('Error retrieving employee userIDs:', err);
+                return res.status(500).send('Server unable to retrieve employees');
+            }
+            
+            if (!roleResult || roleResult.length === 0) {
+                return res.status(200).json([]);
+            }
+            
+            // Extract userIDs
+            const userIDs = roleResult.map(row => row.userID || row.userid);
+            
+            // Now get user details
+            const placeholders = userIDs.map(() => '?').join(',');
+            const usersQuery = `SELECT userID, firstName, lastName FROM users WHERE userID IN (${placeholders})`;
+            
+            req.pool.query(usersQuery, userIDs, (err2, result) => {
+                if (err2) {
+                    console.error('Error retrieving employee details:', err2);
+                    return res.status(500).send('Server unable to retrieve employees');
+                }
+                console.log("Query result:", result);
+                res.status(200).json(result);
+            });
+        });
+    } catch (error) {
+        console.error('Error in employees endpoint:', error);
+        res.status(500).send('Server error');
+    }
 });
 
 /*
